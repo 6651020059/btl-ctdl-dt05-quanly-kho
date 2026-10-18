@@ -70,7 +70,7 @@ Nếu dùng Visual Studio hoặc Code::Blocks: tạo project mới, thêm các f
 | 1 | Đoàn Quốc Nhật (nhóm trưởng) | 6651020059 | 6651020059 | Quản lý dự án, tích hợp, ghép báo cáo |
 | 2 | Huỳnh Long Nhật | 6651020061 | 6651020061 | Cây AVL |
 | 3 | Trần Văn Tài | 6651020077 | (điền vào) | Nghiệp vụ kho |
-| 4 | Hoàng Xuân Nhuật  | 6651020062 | (điền vào) | Doanh thu và đánh giá hiệu năng |
+| 4 | Hoàng Xuân Nhuật  | 6651020062 | hoangxuannhat28-sudo | Doanh thu và đánh giá hiệu năng |
 | 5 | Nguyễn Duy Khang | 6651020037 | (điền vào) | File, giao diện, demo |
 
 Bảng công việc và tiến độ: (dán liên kết Jira vào đây)
