@@ -1,0 +1,41 @@
+# Biên dịch C++
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+quanlykho
+build/
+bin/
+
+# IDE
+.vscode/
+.vs/
+.idea/
+*.cbp
+*.layout
+*.depend
+*.user
+
+# LaTeX
+*.aux
+*.log
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.nav
+*.snm
+*.vrb
+
+# Dữ liệu sinh ra khi đo hiệu năng
+data/generated/
+
+# Hệ điều hành
+.DS_Store
+Thumbs.db
