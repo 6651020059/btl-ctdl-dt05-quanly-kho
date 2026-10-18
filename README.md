@@ -67,7 +67,7 @@ Nếu dùng Visual Studio hoặc Code::Blocks: tạo project mới, thêm các f
 
 | TV | Họ tên | MSSV | Tài khoản GitHub | Phụ trách |
 |---|---|---|---|---|
-| 1 | Đoàn Quốc Nhật (nhóm trưởng) | (điền vào) | (điền vào) | Quản lý dự án, tích hợp, ghép báo cáo |
+| 1 | Đoàn Quốc Nhật (nhóm trưởng) |6651020059 |quocnhat204 | Quản lý dự án, tích hợp, ghép báo cáo |
 | 2 | (điền vào) | (điền vào) | (điền vào) | Cây AVL |
 | 3 | (điền vào) | (điền vào) | (điền vào) | Nghiệp vụ kho |
 | 4 | (điền vào) | (điền vào) | (điền vào) | Doanh thu và đánh giá hiệu năng |
