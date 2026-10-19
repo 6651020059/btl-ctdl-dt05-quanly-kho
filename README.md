@@ -68,8 +68,8 @@ Nếu dùng Visual Studio hoặc Code::Blocks: tạo project mới, thêm các f
 | TV | Họ tên | MSSV | Tài khoản GitHub | Phụ trách |
 |---|---|---|---|---|
 | 1 | Đoàn Quốc Nhật (nhóm trưởng) | 6651020059 | 6651020059 | Quản lý dự án, tích hợp, ghép báo cáo |
-| 2 | Huỳnh Long Nhật | 6651020061 | | longnhat76 | | Cây AVL |
-| 3 | Trần Văn Tài | 6651020077 | | tranvantai76qn| | Nghiệp vụ kho |
+| 2 | Huỳnh Long Nhật | 6651020061 | longnhat76 | Cây AVL |
+| 3 | Trần Văn Tài | 6651020077 | tranvantai76qn | Nghiệp vụ kho |
 | 4 | Hoàng Xuân Nhuật  | 6651020062 | hoangxuannhat28-sudo | Doanh thu và đánh giá hiệu năng |
 | 5 | Nguyễn Duy Khang | 6651020037 | duykhang47 | File, giao diện, demo |
 
