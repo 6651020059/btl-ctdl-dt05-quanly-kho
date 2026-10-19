@@ -56,12 +56,14 @@ Nếu dùng Visual Studio hoặc Code::Blocks: tạo project mới, thêm các f
 
 ## 6. Giao diện đã thống nhất
 
-> Cập nhật sau buổi họp chốt giao diện (19/10).
+> Chốt sau buổi họp giao diện (19/10/2026).
 
-- Cấu trúc `MatHang`: (mã hàng, tên, đơn giá, số lượng tồn, tồn tối thiểu, ngày nhập)
-- Khóa của cây AVL: (điền vào)
-- Tên hàm chính của `AVLTree<T>`: (điền vào)
-- Định dạng file nhị phân: (điền vào)
+- Cấu trúc `MatHang`: `maHang[16]`, `tenHang[64]`, `donGia` (long long, đồng), `soLuongTon`, `tonToiThieu`, `ngayNhap` (struct `Ngay`)
+- Khóa của cây AVL: mã hàng (`maHang`), không cho trùng
+- Tên hàm chính của `AVLTree<K, V>`: `insert`, `remove`, `search`, `rangeSearch`, `inorder`, `size`, `height`, `empty`, `clear`
+- Tra cứu theo khoảng giá: phương án A, duyệt cây rồi lọc theo giá (O(n)), thực hiện ở module kho. Range Search của cây AVL dùng cho khoảng mã hàng (O(log n + k))
+- Hóa đơn: `HoaDon` có tối đa 20 dòng `ChiTietHoaDon`
+- Định dạng file nhị phân: xem mục 9
 
 ## 7. Thành viên
 
@@ -85,3 +87,21 @@ Bảng công việc và tiến độ: (dán liên kết Jira vào đây)
   - `fix: sửa lỗi xóa node có hai con`
   - `docs: viết nháp Chương 2`
   - `test: thêm test Range Search`
+
+ 
+## 9. Định dạng file nhị phân
+
+```cpp
+struct FileHeader {
+    char magic[4];     // "MHG1" cho mathang.bin, "HDN1" cho hoadon.bin
+    int  version;      // hiện tại là 1
+    int  soBanGhi;
+};
+```
+
+- `data/mathang.bin`: 1 `FileHeader`, sau đó `soBanGhi` bản ghi `MatHang`
+- `data/hoadon.bin`: 1 `FileHeader`, sau đó `soBanGhi` bản ghi `HoaDon`
+- Ghi file: duyệt cây theo thứ tự LNR, ghi lần lượt từng bản ghi
+- Đọc file: đọc từng bản ghi rồi `insert` vào cây AVL
+- Kiểm tra khi đọc, theo thứ tự: mở được file, đọc đủ header, `magic` đúng, `version` bằng 1, kích thước file bằng `sizeof(FileHeader) + soBanGhi * sizeof(bản ghi)`. Sai chỗ nào thì báo "file hỏng", không để chương trình sập
+- Lưu ý: file chỉ đảm bảo đọc được khi cùng trình biên dịch và hệ điều hành
