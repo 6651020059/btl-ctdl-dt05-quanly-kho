@@ -91,17 +91,129 @@ Bảng công việc và tiến độ: (dán liên kết Jira vào đây)
  
 ## 9. Định dạng file nhị phân
 
+Đặc tả phiên bản 1 (T44). Giữ nguyên các quyết định đã chốt: hai file riêng, header chung `FileHeader`, ghi nguyên struct.
+
+### 9.1 Hai file dữ liệu
+
+| File | Magic | Nội dung |
+|---|---|---|
+| `data/mathang.bin` | `"MHG1"` | 1 `FileHeader` + `soBanGhi` bản ghi `MatHang` |
+| `data/hoadon.bin` | `"HDN1"` | 1 `FileHeader` + `soBanGhi` bản ghi `HoaDon` |
+
+Không có dấu kết thúc file. Các bản ghi nằm liên tiếp ngay sau header.
+
+### 9.2 FileHeader (12 byte)
+
 ```cpp
 struct FileHeader {
-    char magic[4];     // "MHG1" cho mathang.bin, "HDN1" cho hoadon.bin
+    char magic[4];     // "MHG1" hoặc "HDN1" (4 ký tự, không có '\0')
     int  version;      // hiện tại là 1
-    int  soBanGhi;
+    int  soBanGhi;     // số bản ghi phía sau, phải >= 0
 };
 ```
 
-- `data/mathang.bin`: 1 `FileHeader`, sau đó `soBanGhi` bản ghi `MatHang`
-- `data/hoadon.bin`: 1 `FileHeader`, sau đó `soBanGhi` bản ghi `HoaDon`
-- Ghi file: duyệt cây theo thứ tự LNR, ghi lần lượt từng bản ghi
-- Đọc file: đọc từng bản ghi rồi `insert` vào cây AVL
-- Kiểm tra khi đọc, theo thứ tự: mở được file, đọc đủ header, `magic` đúng, `version` bằng 1, kích thước file bằng `sizeof(FileHeader) + soBanGhi * sizeof(bản ghi)`. Sai chỗ nào thì báo "file hỏng", không để chương trình sập
-- Lưu ý: file chỉ đảm bảo đọc được khi cùng trình biên dịch và hệ điều hành
+| Offset | Kích thước | Trường |
+|---|---|---|
+| 0 | 4 | magic |
+| 4 | 4 | version |
+| 8 | 4 | soBanGhi |
+
+### 9.3 Bố cục bản ghi (đo trên g++ 64-bit, Linux)
+
+Struct được ghi nguyên khối bằng `fwrite`, nên **kích thước file tính theo `sizeof`, đã gồm byte đệm (padding) do trình biên dịch chèn vào**.
+
+**MatHang: `sizeof` = 112 byte**
+
+| Offset | Kích thước | Trường |
+|---|---|---|
+| 0 | 16 | `char maHang[16]` |
+| 16 | 64 | `char tenHang[64]` |
+| 80 | 8 | `long long donGia` |
+| 88 | 4 | `int soLuongTon` |
+| 92 | 4 | `int tonToiThieu` |
+| 96 | 12 | `Ngay ngayNhap` (3 số `int`: ngay, thang, nam) |
+| 108 | 4 | đệm (padding) |
+
+**HoaDon: `sizeof` = 688 byte** (luôn đủ chỗ cho 20 dòng, kể cả dòng chưa dùng)
+
+| Offset | Kích thước | Trường |
+|---|---|---|
+| 0 | 16 | `char maHoaDon[16]` |
+| 16 | 12 | `Ngay ngayLap` |
+| 28 | 4 | đệm |
+| 32 | 640 | `ChiTietHoaDon danhSachChiTiet[20]` (20 x 32 byte) |
+| 672 | 4 | `int soLuongChiTiet` |
+| 676 | 4 | đệm |
+| 680 | 8 | `long long tongTien` |
+
+**ChiTietHoaDon: `sizeof` = 32 byte**
+
+| Offset | Kích thước | Trường |
+|---|---|---|
+| 0 | 16 | `char maHang[16]` |
+| 16 | 4 | `int soLuongMua` |
+| 20 | 4 | đệm |
+| 24 | 8 | `long long donGia` |
+
+### 9.4 Kích thước file kỳ vọng
+
+```
+mathang.bin = sizeof(FileHeader) + soBanGhi * sizeof(MatHang) = 12 + 112 * n
+hoadon.bin  = sizeof(FileHeader) + soBanGhi * sizeof(HoaDon)  = 12 + 688 * m
+```
+
+Ví dụ: 50 mặt hàng cho `mathang.bin` dài 12 + 5600 = **5612 byte**. 10 hóa đơn cho `hoadon.bin` dài 12 + 6880 = **6892 byte**.
+
+Trong code, luôn dùng `sizeof(...)`, không viết cứng các con số trên.
+
+### 9.5 Quy tắc ghi
+
+1. Mở file bằng `ios::binary`.
+2. Ghi `FileHeader` rồi ghi từng bản ghi. Với mặt hàng, lấy từ `kho.inorder()` (thứ tự LNR, tăng dần theo `maHang`).
+3. Ghi ra `<tên>.tmp` trước. Ghi xong và đóng file thành công thì đổi tên thành `<tên>.bin`, để file cũ không bị mất nếu chương trình dừng giữa chừng.
+4. Thư mục `data/` phải tồn tại trước khi ghi.
+
+### 9.6 Quy tắc đọc và kiểm tra
+
+Kiểm tra **theo thứ tự**. Sai bước nào thì báo "file hỏng" (kèm lý do) và dừng, chương trình không được sập:
+
+| Bước | Điều kiện | Thông báo gợi ý |
+|---|---|---|
+| 1 | Mở được file | "không mở được file" |
+| 2 | Đọc đủ 12 byte header | "thiếu header" |
+| 3 | `magic` đúng (`MHG1` / `HDN1`) | "sai định dạng file" |
+| 4 | `version == 1` | "phiên bản không hỗ trợ" |
+| 5 | `soBanGhi >= 0` | "số bản ghi không hợp lệ" |
+| 6 | Kích thước file == `12 + soBanGhi * sizeof(bản ghi)` (tính bằng `long long`) | "kích thước file không khớp" |
+
+Bổ sung khi đọc từng bản ghi:
+
+- Ép byte cuối của `maHang`, `tenHang`, `maHoaDon` thành `'\0'` để chuỗi bị hỏng không gây đọc tràn.
+- Hóa đơn: `soLuongChiTiet` phải nằm trong 0..20.
+- Mặt hàng: `insert` trả `false` (trùng mã) thì bỏ qua bản ghi đó và đếm số bản ghi bị bỏ.
+
+Nguyên tắc: đọc vào bộ nhớ tạm, kiểm tra xong hết mới nạp vào cây AVL (`kho.clear()` rồi `insert`) hoặc `vector<HoaDon>`. Nếu có lỗi, dữ liệu đang chạy giữ nguyên.
+
+### 9.7 Giới hạn và thay đổi phiên bản
+
+- File chỉ đảm bảo đọc được khi **cùng trình biên dịch và hệ điều hành** (kích thước và padding của struct có thể khác giữa các môi trường). Đặt trong `file_io.cpp`:
+  ```cpp
+  static_assert(sizeof(FileHeader) == 12 && sizeof(MatHang) == 112 &&
+                sizeof(ChiTietHoaDon) == 32 && sizeof(HoaDon) == 688,
+                "Kich thuoc struct khac dac ta file nhi phan (muc 9)");
+  ```
+  Nếu một thành viên biên dịch ra số khác (ví dụ MinGW 32-bit), lỗi hiện ngay lúc biên dịch.
+- Khi thay đổi struct `MatHang`, `HoaDon`, `ChiTietHoaDon` hoặc `Ngay`, phải tăng `version`, đổi magic nếu cần, và cập nhật mục này. Bản đọc từ chối mọi phiên bản chưa biết.
+
+### 9.8 Hàm đề xuất (`include/file_io.h`)
+
+```cpp
+bool luuMatHang(const std::string& duongDan, const AVLTree<std::string, MatHang>& kho);
+bool luuHoaDon(const std::string& duongDan, const std::vector<HoaDon>& ds);
+
+bool docMatHang(const std::string& duongDan, AVLTree<std::string, MatHang>& kho,
+                std::string& thongBaoLoi);
+bool docHoaDon(const std::string& duongDan, std::vector<HoaDon>& ds,
+               std::string& thongBaoLoi);
+// Hàm đọc trả false khi file hỏng; dữ liệu đang có trong kho / ds giữ nguyên.
+```
