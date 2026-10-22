@@ -24,7 +24,6 @@ static bool kiemTraNgayHopLe(const Ngay& d) {
 // PHẦN 1: 4 THAO TÁC CRUD CỐT LÕI TRÊN CÂY (THÊM, SỬA, XÓA, TÌM)
 // =====================================================================
 
-// 1. THÊM (Create): Thêm mặt hàng mới vào kho, khóa là maHang (không cho trùng)
 bool themMatHang(KhoHang& kho, const MatHang& mh) {
     if (strlen(mh.maHang) == 0 || strlen(mh.tenHang) == 0) {
         cout << "[Lỗi] Mã hàng và tên hàng không được để trống!\n";
@@ -42,7 +41,6 @@ bool themMatHang(KhoHang& kho, const MatHang& mh) {
     return true;
 }
 
-// 2. SỬA (Update): Tìm mặt hàng theo mã và cập nhật tên, đơn giá, tồn tối thiểu, ngày nhập
 bool suaMatHang(KhoHang& kho, const string& maHang, const char* tenMoi,
                 long long donGiaMoi, int tonToiThieuMoi, Ngay ngayNhapMoi) {
     MatHang* mh = kho.search(maHang);
@@ -66,7 +64,6 @@ bool suaMatHang(KhoHang& kho, const string& maHang, const char* tenMoi,
     return true;
 }
 
-// 3. XÓA (Delete): Xóa mặt hàng khỏi cây theo mã hàng
 bool xoaMatHang(KhoHang& kho, const string& maHang) {
     if (!kho.remove(maHang)) {
         cout << "[Lỗi] Không tìm thấy mặt hàng có mã '" << maHang << "' để xóa!\n";
@@ -75,12 +72,10 @@ bool xoaMatHang(KhoHang& kho, const string& maHang) {
     return true;
 }
 
-// 4. TÌM KIẾM (Read): Tìm mặt hàng theo mã, trả về con trỏ tới MatHang trên cây
 MatHang* timMatHang(KhoHang& kho, const string& maHang) {
     return kho.search(maHang);
 }
 
-// Tra cứu theo khoảng giá O(n): Duyệt cây inorder rồi lọc các mặt hàng nằm trong [giaTu, giaDen]
 void timTheoKhoangGia(const KhoHang& kho, long long giaTu, long long giaDen, vector<MatHang>& ketQua) {
     ketQua.clear();
     vector<MatHang> ds = kho.inorder();
@@ -91,7 +86,6 @@ void timTheoKhoangGia(const KhoHang& kho, long long giaTu, long long giaDen, vec
     }
 }
 
-// Tra cứu theo khoảng mã hàng O(log n + k): Gọi trực tiếp rangeSearch của cây AVL
 void timTheoKhoangMa(const KhoHang& kho, const string& maTu, const string& maDen, vector<MatHang>& ketQua) {
     ketQua.clear();
     kho.rangeSearch(maTu, maDen, ketQua);
@@ -145,7 +139,12 @@ void nhapThemMatHang(KhoHang& kho) {
     Ngay nn;
 
     cout << "Nhập mã hàng (tối đa 15 ký tự): ";
-    cin >> ma;
+    while (cin >> ma) {
+        if (ma.length() <= 15) break;
+        cout << "[Lỗi] Mã hàng vượt quá 15 ký tự. Vui lòng nhập lại: ";
+    }
+    if (cin.eof()) return; // Chống lặp vô hạn khi hết dữ liệu đầu vào
+
     if (kho.search(ma) != nullptr) {
         cout << "[Lỗi] Mã hàng '" << ma << "' đã tồn tại trong hệ thống!\n";
         return;
@@ -154,27 +153,32 @@ void nhapThemMatHang(KhoHang& kho) {
     xoaBoDem();
     cout << "Nhập tên mặt hàng: ";
     getline(cin, ten);
+    if (cin.eof()) return;
 
     cout << "Nhập đơn giá (VNĐ): ";
     while (!(cin >> gia) || gia < 0) {
+        if (cin.eof()) return; 
         xoaBoDem();
         cout << "Đơn giá phải >= 0, nhập lại: ";
     }
 
     cout << "Nhập số lượng tồn ban đầu: ";
     while (!(cin >> slTon) || slTon < 0) {
+        if (cin.eof()) return;
         xoaBoDem();
         cout << "Số lượng tồn phải >= 0, nhập lại: ";
     }
 
     cout << "Nhập ngưỡng tồn tối thiểu: ";
     while (!(cin >> tonMin) || tonMin < 0) {
+        if (cin.eof()) return;
         xoaBoDem();
         cout << "Tồn tối thiểu phải >= 0, nhập lại: ";
     }
 
     cout << "Nhập ngày nhập (Ngay Thang Nam): ";
     while (!(cin >> nn.ngay >> nn.thang >> nn.nam) || !kiemTraNgayHopLe(nn)) {
+        if (cin.eof()) return;
         xoaBoDem();
         cout << "Ngày không hợp lệ, nhập lại (Ngay Thang Nam): ";
     }
@@ -194,6 +198,7 @@ void nhapSuaMatHang(KhoHang& kho) {
 
     cout << "Nhập mã mặt hàng cần sửa: ";
     cin >> ma;
+    if (cin.eof()) return;
 
     MatHang* mh = kho.search(ma);
     if (mh == nullptr) {
@@ -208,24 +213,29 @@ void nhapSuaMatHang(KhoHang& kho) {
     xoaBoDem();
     cout << "Nhập tên mới (nhấn Enter để giữ nguyên '" << mh->tenHang << "'): ";
     getline(cin, tenMoi);
+    if (cin.eof()) return;
+    
     if (tenMoi.empty()) {
         tenMoi = mh->tenHang;
     }
 
     cout << "Nhập đơn giá mới (hiện tại " << mh->donGia << "): ";
     while (!(cin >> giaMoi) || giaMoi < 0) {
+        if (cin.eof()) return;
         xoaBoDem();
         cout << "Đơn giá phải >= 0, nhập lại: ";
     }
 
     cout << "Nhập mức tồn tối thiểu mới (hiện tại " << mh->tonToiThieu << "): ";
     while (!(cin >> tonMinMoi) || tonMinMoi < 0) {
+        if (cin.eof()) return;
         xoaBoDem();
         cout << "Tồn tối thiểu phải >= 0, nhập lại: ";
     }
 
     cout << "Nhập ngày nhập mới (Ngay Thang Nam): ";
     while (!(cin >> nnMoi.ngay >> nnMoi.thang >> nnMoi.nam) || !kiemTraNgayHopLe(nnMoi)) {
+        if (cin.eof()) return;
         xoaBoDem();
         cout << "Ngày không hợp lệ, nhập lại (Ngay Thang Nam): ";
     }
@@ -240,6 +250,7 @@ void nhapXoaMatHang(KhoHang& kho) {
     string ma;
     cout << "Nhập mã mặt hàng cần xóa: ";
     cin >> ma;
+    if (cin.eof()) return;
 
     MatHang* mh = kho.search(ma);
     if (mh == nullptr) {
@@ -251,6 +262,8 @@ void nhapXoaMatHang(KhoHang& kho) {
     char xacNhan;
     cout << "Bạn có chắc chắn muốn xóa mặt hàng này? (y/n): ";
     cin >> xacNhan;
+    if (cin.eof()) return;
+    
     if (xacNhan == 'y' || xacNhan == 'Y') {
         if (xoaMatHang(kho, ma)) {
             cout << "==> Đã xóa mặt hàng '" << ma << "' khỏi kho!\n";
@@ -265,6 +278,7 @@ void nhapTimMatHang(KhoHang& kho) {
     string ma;
     cout << "Nhập mã mặt hàng cần tìm: ";
     cin >> ma;
+    if (cin.eof()) return;
 
     MatHang* mh = timMatHang(kho, ma);
     if (mh == nullptr) {
