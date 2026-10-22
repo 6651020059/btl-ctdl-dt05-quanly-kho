@@ -1,18 +1,27 @@
-CXX      = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
-SRC      = $(wildcard src/*.cpp)
-OUT      = build/quanly
+CXX = g++
+CXXFLAGS = -Iinclude -Wall -Wextra -std=c++11
 
-all: $(OUT)
+# Tên file thực thi
+TARGET = QuanLySieuThi
 
-$(OUT): $(SRC) $(wildcard include/*.h)
-	mkdir -p build
-	$(CXX) $(CXXFLAGS) $(SRC) -o $(OUT)
+# Tìm tất cả file .cpp trong thư mục src
+SRCS = $(wildcard src/*.cpp)
+# Tạo danh sách file .o tương ứng
+OBJS = $(SRCS:.cpp=.o)
 
-run: all
-	./$(OUT)
+# Luật mặc định để build chương trình
+all: $(TARGET)
 
+# Liên kết các file object thành file thực thi
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+# Biên dịch từng file .cpp thành file object .o
+src/%.o: src/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Lệnh dọn dẹp (chạy bằng: make clean)
 clean:
-	rm -rf build
+	rm -f src/*.o $(TARGET)
 
-.PHONY: all run clean
+.PHONY: all clean
