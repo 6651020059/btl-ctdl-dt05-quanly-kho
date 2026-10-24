@@ -1,0 +1,34 @@
+\section{Thiết kế và Cài đặt Module Quản lý Kho hàng}
+
+\subsection{Cấu trúc dữ liệu Mặt hàng (\texttt{struct MatHang})}
+Cấu trúc \texttt{MatHang} (định nghĩa trong \texttt{include/mathang.h}) sử dụng các mảng ký tự kích thước cố định để tương thích trực tiếp với thao tác đọc/ghi bản ghi file nhị phân:
+\begin{verbatim}
+struct MatHang {
+    char maHang[16];      // Khoa chinh tren cay AVL (toi da 15 ky tu)
+    char tenHang[64];     // Ten mat hang (toi da 63 ky tu)
+    long long donGia;     // Don gia ban (VND)
+    int soLuongTon;       // So luong ton kho hien tai
+    int tonToiThieu;      // Nguong canh bao ton kho toi thieu
+    Ngay ngayNhap;        // Ngay nhap kho gan nhat (ngay, thang, nam)
+};
+\end{verbatim}
+
+\subsection{Cài đặt các thao tác CRUD và Tra cứu khoảng giá}
+Module kho sử dụng kiểu bí danh \texttt{typedef AVLTree<std::string, MatHang> KhoHang;}. Mọi thao tác thêm (\texttt{themMatHang}), sửa (\texttt{suaMatHang}), xóa (\texttt{xoaMatHang}) và tìm kiếm (\texttt{timMatHang}) đều ủy quyền trực tiếp cho các phương thức \texttt{insert}, \texttt{search} và \texttt{remove} của cây AVL với độ phức tạp $O(\log n)$. Riêng thao tác tra cứu theo khoảng giá (\texttt{timTheoKhoangGia}) thực hiện duyệt cây theo thứ tự trung thứ tự (\texttt{inorder}) rồi lọc các mặt hàng thỏa mãn $\text{giaTu} \le \text{donGia} \le \text{giaDen}$ với độ phức tạp $O(n)$.
+
+\subsection{Thuật toán Nhập kho, Xuất kho và Chặn xuất quá tồn}
+Hàm \texttt{xuatKho} kiểm tra nghiêm ngặt ràng buộc số lượng tồn trước khi trừ kho và tự động phát cảnh báo nếu chạm ngưỡng tối thiểu:
+\begin{verbatim}
+bool xuatKho(KhoHang& kho, const string& maHang, int soLuongXuat) {
+    if (soLuongXuat <= 0) return false;
+    MatHang* mh = kho.search(maHang);
+    if (mh == nullptr || soLuongXuat > mh->soLuongTon) {
+        return false; // Chan xuat kho khi vuot qua so luong ton
+    }
+    mh->soLuongTon -= soLuongXuat;
+    return true;
+}
+\end{verbatim}
+
+\subsection{Cảnh báo tồn kho tối thiểu}
+Hàm \texttt{layDanhSachCanhBaoTonKho} duyệt danh sách tăng dần từ \texttt{kho.inorder()}, trích xuất toàn bộ các mặt hàng có \texttt{soLuongTon <= tonToiThieu} và tính toán lượng hàng gợi ý cần nhập bổ sung theo công thức $\text{goiYNhap} = 2 \times \text{tonToiThieu} - \text{soLuongTon}$.
