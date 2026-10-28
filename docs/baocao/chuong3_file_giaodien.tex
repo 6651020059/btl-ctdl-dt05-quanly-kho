@@ -1,0 +1,17 @@
+\section{Thiết kế và Cài đặt Module Lưu trữ File Nhị phân và Giao diện Console}
+
+\subsection{Đặc tả cấu trúc File nhị phân (\texttt{FileIO.h})}
+Dữ liệu kho hàng và danh sách hóa đơn được lưu trữ bền vững trên đĩa dưới định dạng nhị phân có độ dài bản ghi cố định theo bố cục tuần tự:
+\[
+  [\texttt{FileHeader}] \;\Vert\; [\texttt{MatHang} \times \text{soMatHang}] \;\Vert\; [\texttt{HoaDon} \times \text{soHoaDon}]
+\]
+Cấu trúc \texttt{FileHeader} gồm 24 byte lưu trữ mã định danh \texttt{magic = "SMK1"}, phiên bản định dạng (\texttt{version = 1}), kích thước bản ghi \texttt{sizeof(MatHang)}, \texttt{sizeof(HoaDon)} và số lượng bản ghi tương ứng.
+
+\subsection{Cơ chế Ghi file an toàn (Atomic Write) và Kiểm lỗi Đọc file}
+\begin{itemize}
+    \item \textbf{Ghi file an toàn (Task T45):} Hàm \texttt{FileIO::ghiFile} ghi toàn bộ dữ liệu ra tệp tạm \texttt{kho.dat.tmp}. Chỉ khi thao tác \texttt{fwrite} và \texttt{fflush} thành công trọn vẹn, chương trình mới đổi tên tệp tạm thành \texttt{kho.dat}, giúp bảo toàn dữ liệu cũ nếu xảy ra sự cố mất điện hoặc đầy ổ đĩa giữa chừng.
+    \item \textbf{Đọc file và kiểm tra toàn vẹn (Task T46):} Hàm \texttt{FileIO::docFile} và \texttt{FileIO::napDuLieu} kiểm tra mã \texttt{magic}, \texttt{version}, kích thước tệp khớp chính xác từng byte, ép ký tự kết thúc chuỗi \texttt{'\textbackslash 0'} và từ chối bản ghi có giá trị âm hoặc trùng mã hàng.
+\end{itemize}
+
+\subsection{Giao diện Menu Console và Xử lý ngoại lệ (Task T47, T48)}
+Hệ thống Menu Console trong \texttt{main.cpp} kiểm tra trạng thái luồng \texttt{std::cin}, tự động làm sạch bộ đệm bằng \texttt{cin.clear()} và \texttt{cin.ignore()} khi nhập sai kiểu dữ liệu. Toàn bộ hàm \texttt{main()} được bọc trong khối \texttt{try/catch} kết hợp hàm hủy \texttt{\textasciitilde AVLTree()} giải phóng đệ quy toàn bộ các nút trên cây, đảm bảo không rò rỉ bộ nhớ.
