@@ -1,0 +1,414 @@
+% ============================================================================
+% T24 - Chương 2 (bản hoàn chỉnh)
+% Đề tài ĐT05 - Hệ thống Quản lý Hàng tồn kho & Doanh thu Siêu thị
+% Người viết: TV2
+%
+% File này chỉ chứa NỘI DUNG chương (\chapter ...), \input vào báo cáo chính.
+% Cần các gói sau trong preamble của mẫu báo cáo (thường đã có sẵn):
+%     \usepackage{amsmath, amssymb}   \usepackage{tikz}   \usepackage{graphicx}
+% Dịch bằng XeLaTeX hoặc LuaLaTeX (có fontspec) để gõ tiếng Việt có dấu.
+% ============================================================================
+
+% ---- Kiểu vẽ dùng cho các hình trong chương (không cần thêm thư viện TikZ) ----
+\tikzset{nut/.style={circle,draw,fill=white,minimum size=7mm,inner sep=1pt}}
+% \tamgiac{tên}{x,y}{nhãn}: cây con vẽ bằng tam giác, (x,y) là đỉnh nối với cha
+\newcommand{\tamgiac}[3]{%
+  \coordinate (#1) at (#2);
+  \draw[fill=gray!15] (#1) -- ++(-0.5,-0.9) -- ++(1,0) -- cycle;
+  \node[font=\scriptsize] at ([yshift=-0.62cm]#1) {#3};}
+
+\chapter{Thiết kế cấu trúc dữ liệu và giải thuật}
+
+Chương này trình bày cơ sở lý thuyết và thiết kế của cây cân bằng AVL được chọn
+làm cấu trúc dữ liệu chính cho hệ thống quản lý hàng tồn kho. Nội dung gồm lý do
+chọn cấu trúc (mục~\ref{sec:avl-lydo}), định nghĩa và hệ số cân bằng
+(mục~\ref{sec:avl-dinhnghia}), bốn phép quay (mục~\ref{sec:avl-quay}), các thao
+tác thêm, xóa, tìm kiếm, duyệt và Range Search (mục~\ref{sec:avl-them}
+đến mục~\ref{sec:avl-range}) và đánh giá độ phức tạp (mục~\ref{sec:avl-dophuctap}).
+
+\section{Lý do chọn cây AVL}\label{sec:avl-lydo}
+
+Danh mục mặt hàng của siêu thị thay đổi liên tục: mặt hàng mới được thêm vào,
+mặt hàng ngừng kinh doanh bị xóa, số lượng tồn kho thay đổi sau mỗi lần nhập và
+xuất. Đồng thời hệ thống phải tra cứu một mặt hàng theo mã gần như tức thì và
+liệt kê các mặt hàng trong một khoảng mã. Các yêu cầu đó dẫn đến ba điều kiện
+đối với cấu trúc dữ liệu: tìm, thêm và xóa nhanh; duyệt được theo thứ tự khóa;
+và tra cứu được theo khoảng.
+
+Cây nhị phân tìm kiếm (BST) thông thường đáp ứng điều kiện thứ hai và thứ ba,
+nhưng độ phức tạp của nó phụ thuộc vào hình dạng cây. Nếu các mã hàng được nhập
+theo thứ tự tăng dần, BST suy biến thành một danh sách liên kết có chiều cao
+$n$ và mỗi thao tác tốn $O(n)$. Cây AVL giữ chiều cao luôn ở mức $O(\log n)$
+bất kể thứ tự nhập, nên được chọn cho đề tài này.
+
+\section{Định nghĩa cây AVL và hệ số cân bằng}\label{sec:avl-dinhnghia}
+
+\subsection{Chiều cao và hệ số cân bằng}
+
+Với mỗi nút $v$ của cây, ký hiệu $h(v)$ là chiều cao của cây con gốc $v$. Quy ước
+dùng trong cài đặt: cây rỗng có chiều cao $0$, nút lá có chiều cao $1$, và
+\[
+  h(v) = 1 + \max\bigl(h(\text{con trái}),\, h(\text{con phải})\bigr).
+\]
+\textbf{Hệ số cân bằng} (balance factor) của nút $v$ là hiệu chiều cao hai cây con:
+\[
+  BF(v) = h(\text{con trái}) - h(\text{con phải}).
+\]
+
+\subsection{Định nghĩa}
+
+\textbf{Cây AVL} là cây nhị phân tìm kiếm trong đó mọi nút $v$ đều thỏa
+$BF(v) \in \{-1, 0, 1\}$. Nút có $BF > 1$ gọi là lệch trái, nút có $BF < -1$
+gọi là lệch phải. Trong chương trình, mỗi nút \texttt{AVLNode} lưu sẵn trường
+\texttt{height}, nên \texttt{getBalanceFactor} chỉ cần lấy hiệu hai trường này
+mà không phải duyệt lại cây con.
+
+\subsection{Chiều cao cây AVL}\label{sec:avl-chieucao}
+
+Gọi $N(h)$ là số nút ít nhất của một cây AVL có chiều cao $h$. Cây ít nút nhất
+có một cây con cao $h-1$ và cây con kia cao $h-2$ (lệch tối đa mà vẫn hợp lệ),
+do đó
+\[
+  N(1) = 1,\quad N(2) = 2,\quad N(h) = N(h-1) + N(h-2) + 1 .
+\]
+Quy hồi này cùng dạng với dãy Fibonacci $F_1 = F_2 = 1,\ F_k = F_{k-1} + F_{k-2}$:
+bằng quy nạp, $N(h) = F_{h+2} - 1$. Vì $F_{h+2} \ge \varphi^{h}$ với
+$\varphi = \frac{1+\sqrt5}{2} \approx 1{,}618$, một cây AVL có $n$ nút và chiều
+cao $h$ thỏa $n \ge \varphi^{h} - 1$, suy ra
+\[
+  h \;\le\; \log_{\varphi}(n+1) \;\approx\; 1{,}44 \,\log_2 (n+1).
+\]
+Như vậy chiều cao cây AVL luôn là $O(\log n)$, và mọi thao tác đi dọc một đường
+từ gốc xuống lá đều có độ phức tạp $O(\log n)$. Bảng~\ref{tab:chieucao} cho
+thấy giá trị này với các kích thước cây điển hình.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|r|r|r|}
+\hline
+Số nút $n$ & Chiều cao tối đa của AVL ($\le 1{,}44\log_2(n+1)$) & Chiều cao tối đa của BST \\
+\hline
+$1\,000$   & $14$  & $1\,000$ \\
+$10\,000$  & $19$  & $10\,000$ \\
+$100\,000$ & $23$  & $100\,000$ \\
+\hline
+\end{tabular}
+\caption{Giới hạn chiều cao của cây AVL so với trường hợp xấu nhất của BST.}
+\label{tab:chieucao}
+\end{table}
+
+\section{Bốn phép quay cân bằng}\label{sec:avl-quay}
+
+Sau khi thêm hoặc xóa một nút, một số nút trên đường đi từ nút đó lên gốc có thể
+có $BF = \pm 2$. Gọi $z$ là nút lệch \emph{thấp nhất} (gần lá nhất), $y$ là con
+của $z$ nằm ở phía cao hơn và $x$ là con của $y$ nằm ở phía cao hơn (hoặc bằng
+nhau khi xóa). Tùy vị trí của $y$ và $x$ mà ta có bốn trường hợp. Trong các hình
+dưới đây, $T_1, T_2, T_3, T_4$ là các cây con (vẽ bằng tam giác) và thứ tự khóa
+từ trái sang phải được giữ nguyên trước và sau khi quay.
+
+\subsection{Trường hợp LL: quay phải}
+
+Nút $z$ lệch trái ($BF(z) = 2$) và con trái $y$ cũng lệch trái hoặc cân bằng
+($BF(y) \ge 0$). Ta quay phải tại $z$: $y$ trở thành gốc của cây con, $z$ trở
+thành con phải của $y$, cây con phải cũ của $y$ (tức $T_3$) được chuyển thành con
+trái của $z$.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[every node/.style={font=\small}]
+  % trước khi quay
+  \node[nut] (z) at (3,0) {$z$};
+  \node[nut] (y) at (1.5,-1.4) {$y$};
+  \node[nut] (x) at (0,-2.8) {$x$};
+  \tamgiac{a1}{-0.9,-4.0}{$T_1$}
+  \tamgiac{a2}{0.9,-4.0}{$T_2$}
+  \tamgiac{a3}{2.5,-2.8}{$T_3$}
+  \tamgiac{a4}{4.5,-1.4}{$T_4$}
+  \draw (z) -- (y);  \draw (z) -- (a4);
+  \draw (y) -- (x);  \draw (y) -- (a3);
+  \draw (x) -- (a1); \draw (x) -- (a2);
+  \node[font=\scriptsize] at ([xshift=-9mm]z) {$BF=2$};
+  % mũi tên
+  \draw[->,thick] (5.8,-1.6) -- (7.2,-1.6)
+      node[midway,above,font=\scriptsize,align=center] {quay phải\\tại $z$};
+  % sau khi quay
+  \node[nut] (y2) at (10,0) {$y$};
+  \node[nut] (x2) at (8.5,-1.4) {$x$};
+  \node[nut] (z2) at (11.5,-1.4) {$z$};
+  \tamgiac{b1}{7.6,-2.8}{$T_1$}
+  \tamgiac{b2}{9.4,-2.8}{$T_2$}
+  \tamgiac{b3}{10.6,-2.8}{$T_3$}
+  \tamgiac{b4}{12.4,-2.8}{$T_4$}
+  \draw (y2) -- (x2); \draw (y2) -- (z2);
+  \draw (x2) -- (b1); \draw (x2) -- (b2);
+  \draw (z2) -- (b3); \draw (z2) -- (b4);
+\end{tikzpicture}}
+\caption{Trường hợp LL: quay phải tại $z$.}
+\label{fig:quay-ll}
+\end{figure}
+
+\subsection{Trường hợp RR: quay trái}
+
+Đối xứng với LL: $z$ lệch phải ($BF(z) = -2$) và con phải $y$ lệch phải hoặc cân
+bằng ($BF(y) \le 0$). Ta quay trái tại $z$.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[every node/.style={font=\small}]
+  \node[nut] (z) at (0,0) {$z$};
+  \node[nut] (y) at (1.5,-1.4) {$y$};
+  \node[nut] (x) at (3,-2.8) {$x$};
+  \tamgiac{a1}{-1.5,-1.4}{$T_1$}
+  \tamgiac{a2}{0.5,-2.8}{$T_2$}
+  \tamgiac{a3}{2.1,-4.0}{$T_3$}
+  \tamgiac{a4}{3.9,-4.0}{$T_4$}
+  \draw (z) -- (a1); \draw (z) -- (y);
+  \draw (y) -- (a2); \draw (y) -- (x);
+  \draw (x) -- (a3); \draw (x) -- (a4);
+  \node[font=\scriptsize] at ([xshift=9mm]z) {$BF=-2$};
+  \draw[->,thick] (5.8,-1.6) -- (7.2,-1.6)
+      node[midway,above,font=\scriptsize,align=center] {quay trái\\tại $z$};
+  \node[nut] (y2) at (10,0) {$y$};
+  \node[nut] (z2) at (8.5,-1.4) {$z$};
+  \node[nut] (x2) at (11.5,-1.4) {$x$};
+  \tamgiac{b1}{7.6,-2.8}{$T_1$}
+  \tamgiac{b2}{9.4,-2.8}{$T_2$}
+  \tamgiac{b3}{10.6,-2.8}{$T_3$}
+  \tamgiac{b4}{12.4,-2.8}{$T_4$}
+  \draw (y2) -- (z2); \draw (y2) -- (x2);
+  \draw (z2) -- (b1); \draw (z2) -- (b2);
+  \draw (x2) -- (b3); \draw (x2) -- (b4);
+\end{tikzpicture}}
+\caption{Trường hợp RR: quay trái tại $z$.}
+\label{fig:quay-rr}
+\end{figure}
+
+\subsection{Trường hợp LR: quay trái rồi quay phải}
+
+Nút $z$ lệch trái nhưng con trái $y$ lệch phải ($BF(y) < 0$), nên một phép quay
+phải đơn tại $z$ chưa đủ. Ta quay trái tại $y$ để đưa về trường hợp LL, sau đó
+quay phải tại $z$. Kết quả là $x$ (cháu) trở thành gốc cây con.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[every node/.style={font=\small}]
+  \node[nut] (z) at (3,0) {$z$};
+  \node[nut] (y) at (1.5,-1.4) {$y$};
+  \node[nut] (x) at (2.6,-2.8) {$x$};
+  \tamgiac{a1}{0.4,-2.8}{$T_1$}
+  \tamgiac{a2}{1.7,-4.0}{$T_2$}
+  \tamgiac{a3}{3.5,-4.0}{$T_3$}
+  \tamgiac{a4}{4.5,-1.4}{$T_4$}
+  \draw (z) -- (y);  \draw (z) -- (a4);
+  \draw (y) -- (a1); \draw (y) -- (x);
+  \draw (x) -- (a2); \draw (x) -- (a3);
+  \node[font=\scriptsize] at ([xshift=-9mm]z) {$BF=2$};
+  \draw[->,thick] (5.8,-1.6) -- (7.2,-1.6)
+      node[midway,above,font=\scriptsize,align=center] {quay trái $y$,\\quay phải $z$};
+  \node[nut] (x2) at (10,0) {$x$};
+  \node[nut] (y2) at (8.5,-1.4) {$y$};
+  \node[nut] (z2) at (11.5,-1.4) {$z$};
+  \tamgiac{b1}{7.6,-2.8}{$T_1$}
+  \tamgiac{b2}{9.4,-2.8}{$T_2$}
+  \tamgiac{b3}{10.6,-2.8}{$T_3$}
+  \tamgiac{b4}{12.4,-2.8}{$T_4$}
+  \draw (x2) -- (y2); \draw (x2) -- (z2);
+  \draw (y2) -- (b1); \draw (y2) -- (b2);
+  \draw (z2) -- (b3); \draw (z2) -- (b4);
+\end{tikzpicture}}
+\caption{Trường hợp LR: quay trái tại $y$ rồi quay phải tại $z$.}
+\label{fig:quay-lr}
+\end{figure}
+
+\subsection{Trường hợp RL: quay phải rồi quay trái}
+
+Đối xứng với LR: $z$ lệch phải nhưng con phải $y$ lệch trái ($BF(y) > 0$). Ta quay
+phải tại $y$ rồi quay trái tại $z$.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[every node/.style={font=\small}]
+  \node[nut] (z) at (0,0) {$z$};
+  \node[nut] (y) at (1.5,-1.4) {$y$};
+  \node[nut] (x) at (0.4,-2.8) {$x$};
+  \tamgiac{a1}{-1.5,-1.4}{$T_1$}
+  \tamgiac{a2}{-0.4,-4.0}{$T_2$}
+  \tamgiac{a3}{1.2,-4.0}{$T_3$}
+  \tamgiac{a4}{2.6,-2.8}{$T_4$}
+  \draw (z) -- (a1); \draw (z) -- (y);
+  \draw (y) -- (x);  \draw (y) -- (a4);
+  \draw (x) -- (a2); \draw (x) -- (a3);
+  \node[font=\scriptsize] at ([xshift=9mm]z) {$BF=-2$};
+  \draw[->,thick] (5.8,-1.6) -- (7.2,-1.6)
+      node[midway,above,font=\scriptsize,align=center] {quay phải $y$,\\quay trái $z$};
+  \node[nut] (x2) at (10,0) {$x$};
+  \node[nut] (z2) at (8.5,-1.4) {$z$};
+  \node[nut] (y2) at (11.5,-1.4) {$y$};
+  \tamgiac{b1}{7.6,-2.8}{$T_1$}
+  \tamgiac{b2}{9.4,-2.8}{$T_2$}
+  \tamgiac{b3}{10.6,-2.8}{$T_3$}
+  \tamgiac{b4}{12.4,-2.8}{$T_4$}
+  \draw (x2) -- (z2); \draw (x2) -- (y2);
+  \draw (z2) -- (b1); \draw (z2) -- (b2);
+  \draw (y2) -- (b3); \draw (y2) -- (b4);
+\end{tikzpicture}}
+\caption{Trường hợp RL: quay phải tại $y$ rồi quay trái tại $z$.}
+\label{fig:quay-rl}
+\end{figure}
+
+\subsection{Tổng hợp cách chọn phép quay}
+
+Phép quay được chọn theo $BF$ của nút lệch $z$ và của con $y$ ở phía lệch
+(bảng~\ref{tab:chonquay}). Trong chương trình, hàm \texttt{rotateRight} và
+\texttt{rotateLeft} cài hai phép quay đơn; các trường hợp LR và RL được ghép từ
+hai phép quay đơn. Sau mỗi phép quay, chiều cao của hai nút bị đổi chỗ được tính
+lại theo thứ tự từ nút thấp lên nút cao.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|l|l|}
+\hline
+$BF(z)$ & $BF(y)$ của con lệch & Trường hợp & Phép quay \\
+\hline
+$\ge 2$  & $\ge 0$ & LL & quay phải tại $z$ \\
+$\ge 2$  & $<0$    & LR & quay trái tại $y$, quay phải tại $z$ \\
+$\le -2$ & $\le 0$ & RR & quay trái tại $z$ \\
+$\le -2$ & $>0$    & RL & quay phải tại $y$, quay trái tại $z$ \\
+\hline
+\end{tabular}
+\caption{Chọn phép quay theo hệ số cân bằng.}
+\label{tab:chonquay}
+\end{table}
+
+Mỗi phép quay chỉ đổi một số hữu hạn con trỏ nên tốn $O(1)$, và không làm đổi
+thứ tự duyệt \emph{inorder} của các khóa: cây sau khi quay vẫn là cây nhị phân
+tìm kiếm hợp lệ.
+
+\section{Thêm nút và tái cân bằng}\label{sec:avl-them}
+
+Thao tác thêm (\texttt{insert}) gồm hai pha, thực hiện trong cùng một hàm đệ quy
+\texttt{insertNode}:
+\begin{enumerate}
+  \item \textbf{Đi xuống:} so sánh khóa mới với khóa của nút hiện tại, đi sang trái
+        nếu nhỏ hơn và sang phải nếu lớn hơn, cho đến khi gặp vị trí rỗng thì tạo
+        nút lá mới. Nếu gặp khóa trùng, thao tác dừng và trả về \texttt{false}, cây
+        không thay đổi.
+  \item \textbf{Đi lên:} trên đường quay lại gốc, mỗi nút cập nhật lại \texttt{height},
+        tính $BF$, và nếu $|BF| = 2$ thì chọn một trong bốn phép quay ở
+        bảng~\ref{tab:chonquay}.
+\end{enumerate}
+
+Sau khi thêm một nút, chiều cao của cây con bị lệch quay về đúng giá trị trước khi
+thêm, nên \emph{nhiều nhất một lần tái cân bằng} (một phép quay đơn hoặc một cặp
+phép quay kép) là đủ để khôi phục tính cân bằng cho toàn bộ cây. Vì đường đi
+có độ dài $O(\log n)$ và mỗi phép quay tốn $O(1)$, thao tác thêm tốn
+$O(\log n)$.
+
+\section{Xóa nút và cân bằng lại}\label{sec:avl-xoa}
+
+Thao tác xóa (\texttt{remove}) tìm nút theo khóa rồi xử lý ba trường hợp:
+\begin{enumerate}
+  \item \textbf{Nút lá:} xóa nút, con trỏ của cha trở thành rỗng.
+  \item \textbf{Nút có một con:} xóa nút và nối con duy nhất của nó vào cha.
+  \item \textbf{Nút có hai con:} tìm nút nhỏ nhất của cây con phải (nút kế tiếp theo
+        thứ tự khóa, hàm \texttt{getMinValueNode}), chép khóa và dữ liệu của nó vào
+        nút cần xóa, rồi xóa nút kế tiếp khỏi cây con phải. Nút kế tiếp không có
+        con trái nên rơi vào trường hợp 1 hoặc 2.
+\end{enumerate}
+Trên đường quay lại gốc, mỗi nút cập nhật \texttt{height} và tái cân bằng giống
+thao tác thêm. Có hai điểm khác so với thao tác thêm.
+\begin{itemize}
+  \item Sau khi xóa, con $y$ của nút lệch $z$ có thể có $BF(y) = 0$. Khi đó phải
+        dùng phép quay \emph{đơn} (LL hoặc RR), vì quay kép sẽ không cân bằng lại
+        cây. Điều kiện chọn quay kép chỉ là $BF(y)$ ngược chiều với $BF(z)$
+        (bảng~\ref{tab:chonquay}).
+  \item Một phép quay có thể làm chiều cao cây con giảm đi $1$, khiến nút tổ tiên
+        phía trên tiếp tục bị lệch. Vì vậy xóa có thể cần tái cân bằng ở
+        \emph{nhiều} nút trên đường đi, tối đa $O(\log n)$ phép quay.
+\end{itemize}
+Tổng độ phức tạp của thao tác xóa vẫn là $O(\log n)$: đi xuống tìm nút, tìm nút kế
+tiếp và quay lại đều dọc theo một đường từ gốc xuống lá.
+
+\section{Tìm kiếm và duyệt cây}\label{sec:avl-timkiem}
+
+\subsection{Tìm kiếm theo khóa}
+
+Hàm \texttt{search} dùng tính chất của cây nhị phân tìm kiếm: so sánh khóa cần tìm
+với khóa của nút hiện tại, đi sang trái nếu nhỏ hơn, sang phải nếu lớn hơn, và
+dừng khi bằng hoặc khi hết cây. Số bước không vượt quá chiều cao cây, tức
+$O(\log n)$ nhờ tính chất ở mục~\ref{sec:avl-chieucao}. Hàm trả về con trỏ tới
+dữ liệu thực tế của nút (hoặc \texttt{nullptr} nếu không có khóa), nên có thể cập
+nhật trực tiếp, chẳng hạn số lượng tồn kho sau một lần nhập hoặc xuất, mà không
+phải xóa rồi thêm lại.
+
+\subsection{Duyệt trung thứ tự (LNR)}
+
+Duyệt \emph{inorder} thăm cây con trái, rồi nút hiện tại, rồi cây con phải. Do tính
+chất của cây nhị phân tìm kiếm, kết quả là danh sách dữ liệu theo khóa tăng dần.
+Hàm \texttt{inorder} dùng thao tác này để lập danh sách mặt hàng theo mã tăng dần
+cho các chức năng liệt kê và báo cáo, đồng thời là cách duy nhất cần dùng khi ghi
+toàn bộ cây ra tệp theo thứ tự khóa. Mỗi nút được thăm đúng một lần nên độ phức
+tạp là $O(n)$.
+
+\section{Tra cứu theo phạm vi (Range Search)}\label{sec:avl-range}
+
+Range Search trả về tất cả phần tử có khóa nằm trong đoạn $[lo, hi]$, theo thứ tự
+tăng dần. Ví dụ: liệt kê các mặt hàng có mã từ \texttt{SP010} đến \texttt{SP050}.
+Thay vì duyệt cả cây rồi lọc, thuật toán chỉ đi vào những nhánh có thể chứa kết
+quả (hàm \texttt{rangeSearchNode}). Tại nút $v$ với khóa $k$:
+\begin{itemize}
+  \item nếu $lo < k$, cây con trái có thể chứa khóa trong đoạn, nên đi sang trái;
+  \item nếu $lo \le k \le hi$, ghi nhận nút $v$ vào kết quả;
+  \item nếu $k < hi$, cây con phải có thể chứa khóa trong đoạn, nên đi sang phải.
+\end{itemize}
+Thứ tự \emph{trái, nút, phải} bảo đảm kết quả đã được sắp tăng dần. Nhánh nào nằm
+hoàn toàn ngoài đoạn bị bỏ qua ngay. Các nút được thăm chia thành hai loại: các
+nút nằm trên hai đường từ gốc đến $lo$ và đến $hi$, có $O(\log n)$ nút, và các nút
+nằm trong kết quả, có $k$ nút. Do đó thời gian là $O(\log n + k)$, thấp hơn nhiều
+so với $O(n)$ khi duyệt toàn bộ nếu đoạn truy vấn nhỏ. Khi $lo > hi$ khoảng rỗng và
+không có phần tử nào được trả về.
+
+Cây được tổ chức theo \emph{khóa}, nên Range Search theo khoảng mã hàng dùng trực
+tiếp khóa chính. Để tra cứu theo khoảng giá, nhiều mặt hàng có thể cùng giá trong
+khi cây AVL không cho phép trùng khóa. Cách xử lý là dùng khóa ghép
+$(\text{giá}, \text{mã hàng})$ với phép so sánh giá trước, mã hàng sau, và dùng cận
+dưới $(g_{\min}, \text{rỗng})$ và cận trên $(g_{\max}, \text{ký tự lớn nhất})$
+cho $lo$ và $hi$.
+
+\section{Đánh giá độ phức tạp}\label{sec:avl-dophuctap}
+
+Bảng~\ref{tab:phuctap} tổng hợp độ phức tạp thời gian của các thao tác, với $n$ là
+số nút của cây và $k$ là số kết quả của Range Search. Mọi giá trị đều suy ra từ
+chiều cao $h = O(\log n)$ ở mục~\ref{sec:avl-chieucao}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|l|c|c|l|}
+\hline
+Thao tác & Trung bình & Xấu nhất & Ghi chú \\
+\hline
+Thêm (\texttt{insert})       & $O(\log n)$     & $O(\log n)$     & tối đa 1 lần tái cân bằng \\
+Xóa (\texttt{remove})        & $O(\log n)$     & $O(\log n)$     & có thể quay ở nhiều nút \\
+Tìm (\texttt{search})        & $O(\log n)$     & $O(\log n)$     & \\
+Duyệt (\texttt{inorder})     & $O(n)$          & $O(n)$          & mỗi nút thăm một lần \\
+Range Search                 & $O(\log n + k)$ & $O(\log n + k)$ & $k$ là số kết quả \\
+Bộ nhớ                       & $O(n)$          & $O(n)$          & thêm 1 trường \texttt{height} mỗi nút \\
+\hline
+\end{tabular}
+\caption{Độ phức tạp các thao tác trên cây AVL.}
+\label{tab:phuctap}
+\end{table}
+
+Với BST thông thường, các thao tác thêm, xóa và tìm có độ phức tạp trung bình
+$O(\log n)$ nhưng xấu nhất là $O(n)$ khi dữ liệu nhập theo thứ tự. Cây AVL đánh đổi
+một chút chi phí cho việc quay và một trường \texttt{height} trên mỗi nút để có
+bảo đảm $O(\log n)$ trong \emph{mọi} trường hợp, điều cần thiết khi mã hàng thường
+được cấp theo thứ tự tăng dần.
+
+Kết quả đo thực tế trên bộ test (chương~4) xác nhận các giá trị này: với $10^3$,
+$10^4$ và $10^5$ khóa ngẫu nhiên, chiều cao đo được lần lượt là $12$, $16$ và $20$,
+đều thấp hơn giới hạn lý thuyết $1{,}44\log_2(n+1)$ ở bảng~\ref{tab:chieucao}.
