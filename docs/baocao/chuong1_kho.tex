@@ -1,0 +1,19 @@
+\chapter{Khảo sát nghiệp vụ và Phân tích bài toán}
+
+\section{Khảo sát thực tế nghiệp vụ quản lý kho và doanh thu siêu thị}
+Trong hoạt động vận hành của siêu thị bán lẻ, số lượng danh mục hàng hóa rất lớn và biến động liên tục theo từng giao dịch mua bán. Qua khảo sát nghiệp vụ thực tế, bài toán đặt ra gồm các luồng công việc chính:
+\begin{itemize}
+    \item \textbf{Quản lý danh mục mặt hàng:} Mỗi mặt hàng được định danh duy nhất bởi mã mặt hàng (\texttt{maHang} cố định tối đa 15 ký tự), tên mặt hàng (\texttt{tenHang} tối đa 63 ký tự), đơn giá bán (\texttt{donGia} kiểu \texttt{long long} tính bằng đồng), số lượng tồn kho hiện tại (\texttt{soLuongTon}), ngưỡng tồn kho tối thiểu (\texttt{tonToiThieu}) và ngày nhập kho (\texttt{ngayNhap} gồm ngày, tháng, năm).
+    \item \textbf{Nghiệp vụ nhập kho và xuất kho:} Khi nhập thêm lô hàng mới, hệ thống cộng dồn số lượng tồn và cập nhật ngày nhập mới nhất. Khi xuất kho hoặc lập hóa đơn bán hàng, hệ thống bắt buộc kiểm tra điều kiện số lượng xuất không vượt quá số lượng tồn hiện tại để chặn tình trạng xuất âm kho.
+    \item \textbf{Cảnh báo tồn kho tối thiểu:} Sau mỗi đợt xuất hàng hoặc khi kiểm kê định kỳ, hệ thống tự động lọc ra danh sách các mặt hàng có \texttt{soLuongTon <= tonToiThieu} để cảnh báo nhập hàng bổ sung kịp thời.
+    \item \textbf{Quản lý hóa đơn và thống kê doanh thu:} Mỗi hóa đơn (\texttt{HoaDon}) chứa tối đa 20 dòng chi tiết mặt hàng (\texttt{ChiTietHoaDon}), tự động trừ tồn kho khi bán và tổng hợp doanh thu theo ngày, tháng cũng như xếp hạng các mặt hàng bán chạy.
+\end{itemize}
+
+\section{Phân tích yêu cầu chức năng của hệ thống}
+Hệ thống được chia thành 4 phân hệ chức năng gắn kết chặt chẽ:
+\begin{enumerate}
+    \item \textbf{Phân hệ Cấu trúc dữ liệu lõi (AVL Tree):} Cài đặt cây nhị phân tìm kiếm tự cân bằng \texttt{AVLTree<K, V>} với khóa \texttt{K} là mã hàng (\texttt{std::string}) và giá trị \texttt{V} là cấu trúc \texttt{MatHang}, hỗ trợ các phép quay cân bằng (LL, RR, LR, RL), thêm, xóa, tìm kiếm chính xác trong thời gian $O(\log n)$ và tìm kiếm theo khoảng mã hàng (\texttt{rangeSearch}) trong thời gian $O(\log n + k)$.
+    \item \textbf{Phân hệ Quản lý kho hàng:} Cung cấp đầy đủ 4 thao tác CRUD (Thêm, Sửa, Xóa, Tìm kiếm), tra cứu mặt hàng theo khoảng giá $O(n)$, nạp bộ dữ liệu mẫu $\ge 50$ mặt hàng từ file CSV, xử lý nhập/xuất kho an toàn và xuất bảng cảnh báo tồn kho tối thiểu.
+    \item \textbf{Phân hệ Hóa đơn và Doanh thu:} Lập hóa đơn bán hàng trực tiếp trên cây kho hàng, trừ tồn tự động, thống kê doanh thu theo ngày/tháng và đánh giá hiệu năng thực nghiệm trên các tập dữ liệu 1.000, 10.000 và 100.000 mặt hàng.
+    \item \textbf{Phân hệ Lưu trữ File nhị phân và Giao diện Console:} Đọc/ghi toàn bộ dữ liệu mặt hàng và hóa đơn ra file nhị phân có cấu trúc Header kiểm tra phiên bản và điều phối qua hệ thống Menu Console có kiểm soát lỗi nhập liệu.
+\end{enumerate}
