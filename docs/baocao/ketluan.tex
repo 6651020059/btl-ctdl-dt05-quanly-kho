@@ -1,0 +1,23 @@
+\chapter*{Kết luận}
+\addcontentsline{toc}{chapter}{Kết luận}
+
+\section*{Kết quả đạt được}
+Nhóm đã hoàn thành hệ thống quản lý hàng tồn kho và doanh thu siêu thị với cây AVL tự cài đặt làm cấu trúc dữ liệu lõi:
+\begin{itemize}
+  \item Cài đặt \texttt{AVLTree<K, V>} đủ 9 hàm công khai (\texttt{insert}, \texttt{remove}, \texttt{search}, \texttt{rangeSearch}, \texttt{inorder}, \texttt{size}, \texttt{height}, \texttt{empty}, \texttt{clear}) với bốn phép quay LL, RR, LR, RL; bộ kiểm thử đạt 33/33 trường hợp.
+  \item Module kho: thêm, sửa, xóa, tìm kiếm, tra cứu theo khoảng giá, nhập và xuất kho (chặn xuất quá tồn), cảnh báo tồn tối thiểu, nạp 50 mặt hàng mẫu từ file CSV.
+  \item Module hóa đơn và doanh thu: lập hóa đơn, tự trừ tồn kho, thống kê doanh thu theo ngày và tháng, xếp hạng mặt hàng bán chạy.
+  \item Lưu và nạp dữ liệu bằng file nhị phân có tiêu đề kiểm tra định dạng, ghi qua file tạm; xử lý các trường hợp file thiếu, file cắt, sai định dạng và dữ liệu vô lý.
+  \item Thực nghiệm: ở 100.000 mặt hàng, cây AVL cao 18 tầng và tìm kiếm nhanh hơn tìm tuyến tính hơn 200 lần \textbf{[TV4 cập nhật số liệu cuối cùng]}.
+\end{itemize}
+
+\section*{Hạn chế}
+\begin{itemize}
+  \item Cây chỉ lưu trong bộ nhớ chính; mỗi lần lưu ghi lại toàn bộ file, chưa hỗ trợ cập nhật từng phần.
+  \item Giao diện là dòng lệnh, chưa có giao diện đồ họa.
+  \item Tra cứu theo khoảng giá duyệt toàn cây với độ phức tạp $O(n)$ vì cây khóa theo mã hàng; chưa có chỉ mục phụ theo giá.
+  \item Mỗi hóa đơn giới hạn 20 dòng chi tiết.
+\end{itemize}
+
+\section*{Hướng phát triển}
+Bổ sung chỉ mục phụ theo đơn giá, dùng cơ sở dữ liệu thay cho file nhị phân, xây dựng giao diện đồ họa hoặc web, và so sánh thêm với cây đỏ--đen hoặc B-tree trên dữ liệu lớn hơn.
