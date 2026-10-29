@@ -1,0 +1,84 @@
+% ============================================================================
+% main.tex - Báo cáo Bài tập lớn CTDL&GT - ĐT05
+% Người dựng khung: TV1. Dịch bằng XeLaTeX:  xelatex main.tex  (chạy 2 lần)
+% Chương chưa có file thì được bỏ qua (\chen), nên ai cũng biên dịch được.
+% ============================================================================
+\documentclass[13pt,a4paper]{extreport}
+\usepackage[top=2.5cm,bottom=2.5cm,left=3cm,right=2cm]{geometry}
+\usepackage{fontspec}
+\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}
+ {\IfFontExistsTF{TeX Gyre Termes}{\setmainfont{TeX Gyre Termes}}{\setmainfont{Liberation Serif}}}
+\IfFontExistsTF{Courier New}{\setmonofont{Courier New}}
+ {\IfFontExistsTF{Liberation Mono}{\setmonofont[Scale=0.9]{Liberation Mono}}{\setmonofont[Scale=0.9]{DejaVu Sans Mono}}}
+\usepackage[provide=*]{babel}
+\babelprovide[main,import]{vietnamese}
+\usepackage{amsmath,amssymb,tikz,graphicx,booktabs,array,caption,float,setspace,titlesec,hyperref}
+\hypersetup{hidelinks}
+\onehalfspacing
+\setlength{\parindent}{1cm}
+\setlength{\parskip}{3pt}
+\titleformat{\chapter}[display]{\bfseries\Large\centering}{CHƯƠNG \thechapter}{6pt}{\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{0pt}{18pt}
+\renewcommand{\thesection}{\arabic{chapter}.\arabic{section}}
+\captionsetup{font=small}
+
+% Chèn file nếu tồn tại, nếu chưa có thì in nhắc việc (không làm lỗi biên dịch)
+\newcommand{\chen}[1]{\IfFileExists{#1.tex}{\input{#1}}{\par\textbf{[Chưa có file \texttt{\detokenize{#1}.tex}]}\par}}
+
+\begin{document}
+
+% ---------------- Bìa ----------------
+\begin{titlepage}
+\centering
+{\large \textbf{TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI PHÂN HIỆU TẠI TP. HỒ CHÍ MINH}}\\[2pt]
+{\large \textbf{KHOA CÔNG NGHỆ THÔNG TIN}}\\[2.5cm]
+{\Large \textbf{BÀI TẬP LỚN}}\\[4pt]
+{\large Học phần: Cấu trúc dữ liệu và Giải thuật}\\[1.5cm]
+{\LARGE \textbf{ĐT05: HỆ THỐNG QUẢN LÝ HÀNG TỒN KHO\\ VÀ DOANH THU SIÊU THỊ\\ SỬ DỤNG CÂY CÂN BẰNG AVL}}\\[2cm]
+\begin{flushleft}\hspace{3cm}
+\begin{tabular}{@{}ll}
+Giảng viên hướng dẫn: & \textbf{Trần Thị Dung}\\
+Nhóm thực hiện: & \textbf{Nhóm ..}\\
+Thành viên: & TV1 -- Đoàn Quốc Nhật -- 6651020059 (Nhóm trưởng)\\
+ & TV2 -- Trần Văn Tài -- 6651020077\\
+ & TV3 -- Huỳnh Long Nhật -- 6651020061\\
+ & TV4 -- Hoàng Xuân Nhuật -- 6651020062\\
+ & TV5 -- Nguyễn Duy Khang -- 6651020037\\
+\end{tabular}
+\end{flushleft}
+\vfill
+{\large TP. Hồ Chí Minh, tháng 11 năm 2026}
+\end{titlepage}
+
+\pagenumbering{roman}
+\chen{loimoidau}
+\tableofcontents
+\clearpage
+\listoffigures
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+
+% ---------------- Nội dung ----------------
+\chen{chuong1_kho}
+
+\chen{chuong2_avl}
+
+\chapter{Cài đặt chương trình}
+\chen{chuong3_kho}
+\chen{chuong3_doanhthu}
+\chen{chuong3_file_giaodien}
+
+\chen{chuong4_benchmark}
+
+\chen{ketluan}
+
+\begin{thebibliography}{9}
+\bibitem{clrs} T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, \textit{Introduction to Algorithms}, 4th ed., MIT Press, 2022.
+\bibitem{adelson} G. M. Adelson-Velsky, E. M. Landis, ``An algorithm for the organization of information'', \textit{Doklady Akademii Nauk SSSR}, 146, 1962.
+\bibitem{knuth} D. E. Knuth, \textit{The Art of Computer Programming, Vol. 3: Sorting and Searching}, 2nd ed., Addison-Wesley, 1998.
+\bibitem{stroustrup} B. Stroustrup, \textit{The C++ Programming Language}, 4th ed., Addison-Wesley, 2013.
+\end{thebibliography}
+
+\chen{phuluc_phancong}
+\end{document}
