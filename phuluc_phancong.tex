@@ -1,0 +1,36 @@
+\chapter*{Phụ lục: Phân công công việc và tình trạng xác minh}
+\addcontentsline{toc}{chapter}{Phụ lục: Phân công công việc và tình trạng xác minh}
+
+Bảng dưới đây mô tả phạm vi công việc được phân công trong kế hoạch và các tệp bàn giao có trong gói hiện tại. Tỷ lệ đóng góp thực tế không được suy ra từ số lượng file hoặc số task được giao. Cần đối chiếu lịch sử commit, nội dung pull request và trạng thái Jira trước khi ghi nhận phần trăm đóng góp chính thức.
+
+\begin{table}[H]
+\centering
+\caption{Phạm vi phân công và bằng chứng trong gói bàn giao}
+\begin{tabular}{@{}p{2.5cm}p{2.5cm}p{5.2cm}p{1.5cm}p{1.8cm}@{}}
+\toprule
+\textbf{Thành viên} & \textbf{Nhánh dự kiến} & \textbf{Phạm vi chính} & \textbf{Task} & \textbf{Tỷ lệ thực tế} \\
+\midrule
+TV1 -- Đoàn Quốc Nhật & \texttt{main-integration} & Tích hợp, Makefile, chương trình chính, khung và kết luận báo cáo. & T01--T15 & Chưa xác minh \\
+TV2 -- Huỳnh Long Nhật & \texttt{avl-tree} & Cây AVL, bộ test cấu trúc dữ liệu, Chương 2. & T16--T25 & Chưa xác minh \\
+TV3 -- Trần Văn Tài & \texttt{module-kho} & Module kho, dữ liệu mẫu, Chương 1 và phần kho Chương 3. & T26--T34 & Chưa xác minh \\
+TV4 -- Hoàng Xuân Nhuật & \texttt{module-doanh-thu} & Hóa đơn, doanh thu, benchmark, Chương 4. & T35--T43 & Chưa xác minh \\
+TV5 -- Nguyễn Duy Khang & \texttt{fileio-ui} & FileIO, giao diện console, slide và kịch bản demo. & T44--T52 & Chưa xác minh \\
+Cả nhóm & \texttt{main} & Đọc chéo báo cáo và tập dượt demo. & T52--T53 & Cần biên bản \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{Quy tắc xác nhận phần trăm đóng góp}
+Khi hoàn thiện phụ lục cuối cùng, nhóm nên thống nhất một khoảng thời gian thống kê; xuất danh sách commit theo từng tác giả; loại commit merge, commit bot và commit trùng lặp; đối chiếu thay đổi thực chất của từng pull request; sau đó so sánh với task Jira đã được nghiệm thu. Số dòng thêm/xóa không nên là tiêu chí duy nhất vì một thay đổi thiết kế hoặc sửa lỗi nhỏ có thể có giá trị khác với việc sinh mã tự động.
+
+\section*{Danh sách minh chứng quy trình cần lưu}
+\begin{itemize}
+  \item Đường dẫn repository và ảnh/chụp xuất lịch sử commit theo thành viên.
+  \item Link pull request, người review, ngày merge và trạng thái cuối của từng nhánh.
+  \item Bản xuất Jira thể hiện assignee, deadline, trạng thái và người nghiệm thu cho các task.
+  \item Email hoặc xác nhận chia sẻ bản LaTeX cho giảng viên (T04).
+  \item Phiếu/biên bản đọc chéo báo cáo của các thành viên (T53).
+  \item Biên bản tập dượt demo hoặc checklist chạy thử có người tham gia (T52).
+\end{itemize}
+
+Không có các minh chứng trên trong các tệp được cung cấp ở lần rà soát này. Vì vậy, phụ lục sử dụng nhãn ``chưa xác minh'' thay vì ghi 20\% đồng đều cho từng thành viên.

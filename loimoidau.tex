@@ -1,0 +1,22 @@
+\chapter*{Lời nói đầu}
+\addcontentsline{toc}{chapter}{Lời nói đầu}
+
+Trong các hệ thống quản lý bán lẻ, kho hàng là nơi dữ liệu được tra cứu, cập nhật và thống kê liên tục: mỗi lần bán hàng phải kiểm tra tồn kho, mỗi lần nhập hàng phải cập nhật số lượng, và cuối ngày phải tổng hợp doanh thu. Khi số lượng mặt hàng tăng từ vài nghìn lên hàng trăm nghìn, việc chọn cấu trúc dữ liệu phù hợp quyết định trực tiếp tốc độ phản hồi của chương trình. Tìm kiếm tuần tự trên mảng có độ phức tạp $O(n)$ và chậm dần theo quy mô dữ liệu, trong khi cây nhị phân tìm kiếm tự cân bằng AVL luôn giữ chiều cao $O(\log n)$ cho các thao tác thêm, xóa và tìm kiếm.
+
+Bài tập lớn học phần \textit{Cấu trúc dữ liệu và Giải thuật}, đề tài ĐT05, yêu cầu nhóm tự cài đặt cây AVL \texttt{AVLTree<K, V>} bằng C++ rồi ứng dụng vào bài toán quản lý hàng tồn kho và doanh thu siêu thị. Chương trình gồm các chức năng: quản lý danh mục mặt hàng (thêm, sửa, xóa, tìm kiếm, tra cứu theo khoảng), nhập và xuất kho có cảnh báo tồn tối thiểu, lập hóa đơn và thống kê doanh thu, lưu và nạp dữ liệu bằng file nhị phân, cùng giao diện dòng lệnh. Nhóm cũng đo thực nghiệm thời gian tìm kiếm của cây AVL so với tìm kiếm tuyến tính ở ba quy mô 1.000, 10.000 và 100.000 mặt hàng.
+
+Báo cáo được chia thành bốn chương:
+\begin{itemize}
+  \item \textbf{Chương 1} khảo sát nghiệp vụ và phân tích yêu cầu chức năng của hệ thống.
+  \item \textbf{Chương 2} trình bày lý thuyết, các phép quay và cài đặt cây AVL, kèm đánh giá độ phức tạp từng thao tác.
+  \item \textbf{Chương 3} mô tả cài đặt ba phân hệ: quản lý kho, hóa đơn và doanh thu, file nhị phân và giao diện.
+  \item \textbf{Chương 4} trình bày thực nghiệm hiệu năng và phân tích độ phức tạp.
+\end{itemize}
+Phần cuối gồm kết luận, tài liệu tham khảo và phụ lục phân công công việc của năm thành viên.
+
+Nhóm xin chân thành cảm ơn giảng viên hướng dẫn đã định hướng và góp ý trong quá trình thực hiện. Do thời gian có hạn, báo cáo khó tránh khỏi thiếu sót; nhóm rất mong nhận được nhận xét của thầy cô để hoàn thiện hơn.
+
+\begin{flushright}
+\textit{TP. Hồ Chí Minh, tháng 11 năm 2026}\\
+\textbf{Nhóm thực hiện}
+\end{flushright}
