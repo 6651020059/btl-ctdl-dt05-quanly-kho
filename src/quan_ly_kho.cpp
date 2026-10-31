@@ -4,7 +4,10 @@
 #include <limits>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
+#include <cerrno>
 #include "quan_ly_kho.h"
+#include "nghiep_vu_ton.h"
 
 using namespace std;
 
@@ -16,10 +19,18 @@ static void xoaBoDem() {
 
 // Hàm phụ trợ: Kiểm tra ngày tháng năm nhập vào có hợp lệ không
 static bool kiemTraNgayHopLe(const Ngay& d) {
-    if (d.nam < 1900 || d.nam > 2100) return false;
-    if (d.thang < 1 || d.thang > 12) return false;
-    if (d.ngay < 1 || d.ngay > 31) return false;
-    return true;
+    return ngayHopLe(d);   // kiểm tra theo lịch thực tế (ngay.h): tháng 30/31 ngày, năm nhuận
+}
+
+static bool docXacNhanKho(const char* cauHoi) {
+    string dong;
+    while (true) {
+        cout << cauHoi << " (y/n): ";
+        if (!getline(cin >> ws, dong)) return false;
+        if (!dong.empty() && (dong[0] == 'y' || dong[0] == 'Y')) return true;
+        if (!dong.empty() && (dong[0] == 'n' || dong[0] == 'N')) return false;
+        cout << "Vui lòng nhập y/yes hoặc n/no.\n";
+    }
 }
 
 // =====================================================================
@@ -27,12 +38,19 @@ static bool kiemTraNgayHopLe(const Ngay& d) {
 // =====================================================================
 
 bool themMatHang(KhoHang& kho, const MatHang& mh) {
-    if (strlen(mh.maHang) == 0 || strlen(mh.tenHang) == 0) {
+    if (memchr(mh.maHang, '\0', sizeof(mh.maHang)) == nullptr ||
+        memchr(mh.tenHang, '\0', sizeof(mh.tenHang)) == nullptr ||
+        strlen(mh.maHang) == 0 || strlen(mh.maHang) > 15 ||
+        strlen(mh.tenHang) == 0 || strlen(mh.tenHang) > 63) {
         cout << "[Lỗi] Mã hàng và tên hàng không được để trống!\n";
         return false;
     }
     if (mh.donGia < 0 || mh.soLuongTon < 0 || mh.tonToiThieu < 0) {
         cout << "[Lỗi] Đơn giá, số lượng tồn và tồn tối thiểu không được âm!\n";
+        return false;
+    }
+    if (!kiemTraNgayHopLe(mh.ngayNhap)) {
+        cout << "[Lỗi] Ngày nhập không hợp lệ theo lịch (vd: 31/02 không tồn tại)!\n";
         return false;
     }
     string khoa(mh.maHang);
@@ -54,15 +72,17 @@ bool suaMatHang(KhoHang& kho, const string& maHang, const char* tenMoi,
         cout << "[Lỗi] Đơn giá mới và mức tồn tối thiểu mới không được âm!\n";
         return false;
     }
+    if (!kiemTraNgayHopLe(ngayNhapMoi)) {
+        cout << "[Lỗi] Ngày nhập mới không hợp lệ theo lịch; không sửa mặt hàng!\n";
+        return false;
+    }
     if (tenMoi && strlen(tenMoi) > 0) {
         memset(mh->tenHang, 0, sizeof(mh->tenHang));
         strncpy(mh->tenHang, tenMoi, sizeof(mh->tenHang) - 1);
     }
     mh->donGia = donGiaMoi;
     mh->tonToiThieu = tonToiThieuMoi;
-    if (kiemTraNgayHopLe(ngayNhapMoi)) {
-        mh->ngayNhap = ngayNhapMoi;
-    }
+    mh->ngayNhap = ngayNhapMoi;
     return true;
 }
 
@@ -169,52 +189,73 @@ int khoiTaoDuLieuMau50MatHang(KhoHang& kho) {
     return dem;
 }
 
+static bool parseLongLongCSV(const string& s, long long& value) {
+    if (s.empty()) return false;
+    errno = 0;
+    char* end = nullptr;
+    long long v = strtoll(s.c_str(), &end, 10);
+    if (errno == ERANGE || end == s.c_str() || *end != '\0') return false;
+    value = v;
+    return true;
+}
+
+static bool parseIntCSV(const string& s, int& value) {
+    long long v = 0;
+    if (!parseLongLongCSV(s, v) || v < numeric_limits<int>::min() || v > numeric_limits<int>::max())
+        return false;
+    value = static_cast<int>(v);
+    return true;
+}
+
 int napDuLieuMauTuFile(KhoHang& kho, const string& tenFile) {
     ifstream file(tenFile.c_str());
+    if (!file.is_open()) file.open("data/du_lieu_mau.csv");
+    if (!file.is_open()) file.open("du_lieu_mau.csv");
     if (!file.is_open()) {
+        cerr << "[CSV] Không mở được file dữ liệu mẫu; dùng bộ 50 mặt hàng tích hợp.\n";
         return khoiTaoDuLieuMau50MatHang(kho);
     }
 
     string dong;
     int dem = 0;
-
+    size_t soDong = 0;
     if (!getline(file, dong)) {
-        file.close();
-        return khoiTaoDuLieuMau50MatHang(kho);
+        cerr << "[CSV] File dữ liệu mẫu rỗng; không nạp bản ghi nào.\n";
+        return 0;
     }
+    ++soDong; // dòng tiêu đề
 
     while (getline(file, dong)) {
-        if (!dong.empty() && dong.back() == '\r') {
-            dong.pop_back();
-        }
+        ++soDong;
+        if (!dong.empty() && dong.back() == '\r') dong.pop_back();
         if (dong.empty()) continue;
 
+        vector<string> cot;
+        string token;
         stringstream ss(dong);
-        string ma, ten, giaStr, slTonStr, tonMinStr, ngayStr, thangStr, namStr;
-
-        if (!getline(ss, ma, ',')) continue;
-        if (!getline(ss, ten, ',')) continue;
-        if (!getline(ss, giaStr, ',')) continue;
-        if (!getline(ss, slTonStr, ',')) continue;
-        if (!getline(ss, tonMinStr, ',')) continue;
-        if (!getline(ss, ngayStr, ',')) continue;
-        if (!getline(ss, thangStr, ',')) continue;
-        if (!getline(ss, namStr, ',')) continue;
-
-        if (ma.empty() || ma.length() > 15) continue;
-
-        try {
-            long long gia = stoll(giaStr);
-            int slTon = stoi(slTonStr);
-            int tonMin = stoi(tonMinStr);
-            Ngay nn(stoi(ngayStr), stoi(thangStr), stoi(namStr));
-
-            MatHang mh(ma.c_str(), ten.c_str(), gia, slTon, tonMin, nn);
-            if (kho.insert(ma, mh)) {
-                ++dem;
-            }
-        } catch (...) {
+        while (getline(ss, token, ',')) cot.push_back(token);
+        if (cot.size() != 8) {
+            cerr << "[CSV] Dòng " << soDong << " bị bỏ qua: cần đúng 8 cột, nhận được " << cot.size() << ".\n";
             continue;
+        }
+
+        const string& ma = cot[0];
+        const string& ten = cot[1];
+        long long gia = 0;
+        int slTon = 0, tonMin = 0, ngay = 0, thang = 0, nam = 0;
+        if (ma.empty() || ma.size() > 15 || ten.empty() || ten.size() > 63 ||
+            !parseLongLongCSV(cot[2], gia) || !parseIntCSV(cot[3], slTon) ||
+            !parseIntCSV(cot[4], tonMin) || !parseIntCSV(cot[5], ngay) ||
+            !parseIntCSV(cot[6], thang) || !parseIntCSV(cot[7], nam)) {
+            cerr << "[CSV] Dòng " << soDong << " bị bỏ qua: trường rỗng, quá dài hoặc không phải số hợp lệ.\n";
+            continue;
+        }
+
+        MatHang mh(ma.c_str(), ten.c_str(), gia, slTon, tonMin, Ngay(ngay, thang, nam));
+        if (themMatHang(kho, mh)) {
+            ++dem;
+        } else {
+            cerr << "[CSV] Dòng " << soDong << " bị bỏ qua do vi phạm quy tắc mặt hàng.\n";
         }
     }
     file.close();
@@ -235,10 +276,27 @@ bool nhapKho(KhoHang& kho, const string& maHang, int soLuongNhap, Ngay ngayNhapM
         cout << "[Lỗi] Không tìm thấy mặt hàng có mã '" << maHang << "' để nhập kho!\n";
         return false;
     }
-    mh->soLuongTon += soLuongNhap;
-    if (kiemTraNgayHopLe(ngayNhapMoi)) {
-        mh->ngayNhap = ngayNhapMoi;
+
+    if (!kiemTraNgayHopLe(ngayNhapMoi)) {
+        cout << "[Lỗi] Ngày nhập kho không hợp lệ theo lịch; không nhập kho!\n";
+        return false;
     }
+
+    // Bảo vệ dữ liệu: số lượng tồn phải không âm trước khi thực hiện phép cộng.
+    if (mh->soLuongTon < 0) {
+        cout << "[Lỗi] Số lượng tồn hiện tại không hợp lệ; không thể nhập kho!\n";
+        return false;
+    }
+
+    // Kiểm tra trước phép cộng để tránh tràn số nguyên có dấu (INT_MAX).
+    if (soLuongNhap > numeric_limits<int>::max() - mh->soLuongTon) {
+        cout << "[Lỗi] Không thể nhập kho! Tổng số lượng tồn sẽ vượt giới hạn kiểu int ("
+             << numeric_limits<int>::max() << ").\n";
+        return false;
+    }
+
+    mh->soLuongTon += soLuongNhap;
+    mh->ngayNhap = ngayNhapMoi;
     return true;
 }
 
@@ -258,14 +316,8 @@ bool xuatKho(KhoHang& kho, const string& maHang, int soLuongXuat) {
         return false;
     }
 
-    mh->soLuongTon -= soLuongXuat;
-    if (mh->soLuongTon == 0) {
-        cout << "--> [CẢNH BÁO]: Mặt hàng " << mh->maHang << " (" << mh->tenHang << ") đã HẾT HÀNG!\n";
-    } else if (mh->soLuongTon <= mh->tonToiThieu) {
-        cout << "--> [CẢNH BÁO]: Mặt hàng " << mh->maHang << " (" << mh->tenHang
-             << ") chỉ còn " << mh->soLuongTon << " sản phẩm (<= mức tối thiểu " << mh->tonToiThieu << ")!\n";
-    }
-    return true;
+    // Cùng dùng một điểm giảm tồn/cảnh báo với luồng hóa đơn.
+    return giamTonKho(*mh, soLuongXuat);
 }
 
 // =====================================================================
@@ -292,12 +344,12 @@ void canhBaoTonKhoToiThieu(const KhoHang& kho) {
     }
 
     cout << string(108, '-') << "\n";
-    cout << left << setw(10) << "Mã hàng"
-         << setw(32) << "Tên mặt hàng"
-         << right << setw(14) << "Đơn giá (đ)"
-         << setw(10) << "SL Tồn"
-         << setw(10) << "Tồn min"
-         << setw(14) << "Cần nhập thêm"
+    cout << left << setw(10) << "Ma hang"
+         << setw(32) << "Ten mat hang"
+         << right << setw(14) << "Don gia (VND)"
+         << setw(10) << "SL ton"
+         << setw(10) << "Ton min"
+         << setw(14) << "Can nhap them"
          << "   " << left << setw(14) << "Trạng thái" << "\n";
     cout << string(108, '-') << "\n";
 
@@ -325,12 +377,12 @@ void canhBaoTonKhoToiThieu(const KhoHang& kho) {
 
 void inTieuDeBangKho() {
     cout << string(95, '-') << "\n";
-    cout << left << setw(12) << "Mã hàng"
-         << setw(30) << "Tên mặt hàng"
-         << right << setw(14) << "Đơn giá (đ)"
-         << setw(12) << "SL Tồn"
-         << setw(12) << "Tồn min"
-         << "   " << left << setw(12) << "Ngày nhập" << "\n";
+    cout << left << setw(12) << "Ma hang"
+         << setw(30) << "Ten mat hang"
+         << right << setw(14) << "Don gia (VND)"
+         << setw(12) << "SL ton"
+         << setw(12) << "Ton min"
+         << "   " << left << setw(12) << "Ngay nhap" << "\n";
     cout << string(95, '-') << "\n";
 }
 
@@ -382,6 +434,10 @@ void nhapThemMatHang(KhoHang& kho) {
     cout << "Nhập tên mặt hàng: ";
     getline(cin, ten);
     if (cin.eof()) return;
+    if (ten.empty() || ten.size() > 63) {
+        cout << "[Lỗi] Tên hàng phải có 1..63 ký tự; không lưu dữ liệu bị cắt.\n";
+        return;
+    }
 
     cout << "Nhập đơn giá (VNĐ): ";
     while (!(cin >> gia) || gia < 0) {
@@ -446,6 +502,10 @@ void nhapSuaMatHang(KhoHang& kho) {
     if (tenMoi.empty()) {
         tenMoi = mh->tenHang;
     }
+    if (tenMoi.size() > 63) {
+        cout << "[Lỗi] Tên hàng mới vượt quá 63 ký tự; không cập nhật.\n";
+        return;
+    }
 
     cout << "Nhập đơn giá mới (hiện tại " << mh->donGia << "): ";
     while (!(cin >> giaMoi) || giaMoi < 0) {
@@ -487,12 +547,7 @@ void nhapXoaMatHang(KhoHang& kho) {
     }
 
     cout << "-> Mặt hàng: " << mh->tenHang << " | Tồn kho hiện tại: " << mh->soLuongTon << "\n";
-    char xacNhan;
-    cout << "Bạn có chắc chắn muốn xóa mặt hàng này? (y/n): ";
-    cin >> xacNhan;
-    if (cin.eof()) return;
-
-    if (xacNhan == 'y' || xacNhan == 'Y') {
+    if (docXacNhanKho("Bạn có chắc chắn muốn xóa mặt hàng này?")) {
         if (xoaMatHang(kho, ma)) {
             cout << "==> Đã xóa mặt hàng '" << ma << "' khỏi kho!\n";
         }
