@@ -2,22 +2,31 @@
 \addcontentsline{toc}{chapter}{Kết luận}
 
 \section*{Kết quả đạt được}
-Nhóm đã hoàn thành hệ thống quản lý hàng tồn kho và doanh thu siêu thị với cây AVL tự cài đặt làm cấu trúc dữ liệu lõi:
+Nhóm đã xây dựng bản tích hợp hệ thống quản lý hàng tồn kho và doanh thu siêu thị sử dụng cây AVL tự cài đặt làm cấu trúc dữ liệu lõi. Trên phiên bản mã nguồn được ghép từ năm gói thành viên và cập nhật trong đợt này, các kết quả có thể kiểm chứng gồm:
 \begin{itemize}
-  \item Cài đặt \texttt{AVLTree<K, V>} đủ 9 hàm công khai (\texttt{insert}, \texttt{remove}, \texttt{search}, \texttt{rangeSearch}, \texttt{inorder}, \texttt{size}, \texttt{height}, \texttt{empty}, \texttt{clear}) với bốn phép quay LL, RR, LR, RL; bộ kiểm thử đạt 33/33 trường hợp.
-  \item Module kho: thêm, sửa, xóa, tìm kiếm, tra cứu theo khoảng giá, nhập và xuất kho (chặn xuất quá tồn), cảnh báo tồn tối thiểu, nạp 50 mặt hàng mẫu từ file CSV.
-  \item Module hóa đơn và doanh thu: lập hóa đơn, tự trừ tồn kho, thống kê doanh thu theo ngày và tháng, xếp hạng mặt hàng bán chạy.
-  \item Lưu và nạp dữ liệu bằng file nhị phân có tiêu đề kiểm tra định dạng, ghi qua file tạm; xử lý các trường hợp file thiếu, file cắt, sai định dạng và dữ liệu vô lý.
-  \item Thực nghiệm: ở 100.000 mặt hàng, cây AVL cao 18 tầng và tìm kiếm nhanh hơn tìm tuyến tính hơn 200 lần \textbf{[TV4 cập nhật số liệu cuối cùng]}.
+  \item Cài đặt \texttt{AVLTree<K,V>} với thêm, xóa, tìm kiếm, duyệt, range search, kích thước/chiều cao và kiểm tra rỗng. Bộ kiểm thử cập nhật đạt 35/35 ca, trong đó có kiểm tra tính \texttt{const} của kết quả tìm kiếm và move constructor/assignment.
+  \item Module kho hỗ trợ CRUD, nhập/xuất, chặn xuất quá tồn, kiểm tra tràn số khi nhập, kiểm tra ngày theo lịch và nạp CSV có xác thực từng dòng. Các kịch bản tích hợp kho hiện có chạy đạt.
+  \item Module hóa đơn chỉ trừ tồn sau khi người dùng xác nhận toàn bộ giao dịch; EOF hoặc từ chối xác nhận hủy hóa đơn và giữ nguyên tồn kho. Mã hóa đơn trùng, số lượng không hợp lệ, dòng hàng lặp và tổng tiền vượt giới hạn được kiểm tra. Bộ test hóa đơn--doanh thu đạt 55/55 ca.
+  \item Module FileIO kiểm tra magic/version, kích thước, mã hàng trùng, trường dữ liệu mặt hàng và chi tiết hóa đơn; khi ghi, vùng đệm của struct được khởi tạo trước khi tuần tự hóa. Các ca FileIO được mở rộng và chạy đạt.
+  \item Makefile đã theo dõi phụ thuộc header qua \texttt{-MMD -MP}, có target \texttt{asan}; bộ test khởi động đạt 12/12 ca và xác nhận file kho hỏng không bị tự động ghi đè.
 \end{itemize}
+
+\section*{Kết quả benchmark}
+Lần benchmark cập nhật ngày 31/10/2026 chạy với GCC 14.2.0 trên Linux x86\_64, container được cấp 3 CPU logic. Mỗi cấu trúc thực hiện cùng 1.000 truy vấn; chạy làm nóng trước, đo 9 lần và lấy trung vị. Ở 100.000 mặt hàng, AVL có chiều cao 17 và mất 389,176 $\mu$s; vector đã sắp xếp với \texttt{lower\_bound} mất 216,581 $\mu$s cho 1.000 truy vấn. Như vậy vector nhanh hơn khoảng 1,79 lần trong phép đo tìm kiếm này, phù hợp với lợi thế locality/cache của vùng nhớ liên tục; cả hai phương pháp đều có chi phí tìm kiếm logarithm.
+
+Với 100 thao tác cập nhật tại 100.000 mặt hàng, AVL mất 23,595 $\mu$s cho chèn và 177,273 $\mu$s cho xóa; vector đã sắp xếp lần lượt mất 40.817,120 $\mu$s và 21.948,953 $\mu$s do phải dịch chuyển phần tử. Kết quả cho thấy không thể kết luận AVL luôn nhanh hơn trong mọi tác vụ; lợi thế của mỗi cấu trúc phụ thuộc vào tỷ lệ tra cứu/cập nhật. Các bảng và phương pháp đo chi tiết nằm ở Chương 4, dữ liệu stdout được lưu trong \texttt{benchmark\_console.txt}.
 
 \section*{Hạn chế}
 \begin{itemize}
-  \item Cây chỉ lưu trong bộ nhớ chính; mỗi lần lưu ghi lại toàn bộ file, chưa hỗ trợ cập nhật từng phần.
-  \item Giao diện là dòng lệnh, chưa có giao diện đồ họa.
-  \item Tra cứu theo khoảng giá duyệt toàn cây với độ phức tạp $O(n)$ vì cây khóa theo mã hàng; chưa có chỉ mục phụ theo giá.
-  \item Mỗi hóa đơn giới hạn 20 dòng chi tiết.
+  \item Ứng dụng vẫn là giao diện console, chưa có xác thực, phân quyền hoặc giao diện đồ họa.
+  \item Dữ liệu kho được lưu bằng định dạng nhị phân gắn với cách bố trí struct của bản build; chưa phải định dạng trao đổi độc lập nền tảng.
+  \item Tra cứu theo khoảng giá vẫn phải duyệt dữ liệu vì cây AVL hiện được khóa theo mã hàng; chưa có chỉ mục phụ theo giá.
+  \item Mỗi hóa đơn giới hạn tối đa 20 dòng chi tiết.
+  \item Benchmark được thực hiện trong một môi trường container và với một bộ truy vấn; chưa đánh giá RAM, truy vấn thất bại, tải đồng thời hay thời gian lưu file.
 \end{itemize}
 
+\section*{Công việc cần xác nhận trước khi nộp}
+Các gói file có thể chứng minh mã nguồn, nội dung LaTeX, slide, kịch bản demo và kết quả build/test trong môi trường hiện tại. Tuy nhiên, chúng không cung cấp lịch sử commit, dữ liệu Jira, URL/trạng thái pull request, email gửi giảng viên, biên nhận nộp bài hoặc biên bản tập dượt/đọc chéo. Vì vậy, nhóm cần thực hiện và lưu những bằng chứng này trực tiếp trước khi đánh dấu các task quy trình là hoàn tất. Tỷ lệ đóng góp của từng người phải được tính từ commit và công việc thực tế, không tự đặt mặc định.
+
 \section*{Hướng phát triển}
-Bổ sung chỉ mục phụ theo đơn giá, dùng cơ sở dữ liệu thay cho file nhị phân, xây dựng giao diện đồ họa hoặc web, và so sánh thêm với cây đỏ--đen hoặc B-tree trên dữ liệu lớn hơn.
+Các hướng mở rộng gồm xây dựng chỉ mục phụ theo đơn giá; chuyển sang cơ sở dữ liệu có giao dịch; chuẩn hóa định dạng lưu file độc lập ABI và có checksum; thêm kiểm thử bộ nhớ; bổ sung tìm kiếm theo tên/nhóm hàng; xây dựng giao diện đồ họa hoặc web; và mở rộng benchmark sang truy vấn thất bại, bộ nhớ, tải đồng thời cũng như các phân phối dữ liệu khác.
