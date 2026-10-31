@@ -1,0 +1,51 @@
+
+==================================================
+   CHUONG TRINH BENCHMARK HIEU NANG AVL
+==================================================
+
+==================================================
+  QUY MO KIEM THU: 1000 MAT HANG
+==================================================
+ - Chieu cao cay AVL (1000 nut): 10
+ - So truy van khop: 1000/1000 (1000 truy van; 9 lan do)
+ - Trung vi AVL:     100.089 microseconds / 1000 truy van
+ - Trung vi Vector (sorted + lower_bound): 64.496 microseconds / 1000 truy van
+ ==> Vector/AVL (tim kiem): 0.64 lan
+ - Them 100 khoa | AVL: 10.816 us | Vector sorted: 323.700 us
+ - Xoa  100 khoa | AVL: 12.438 us | Vector sorted: 188.830 us
+
+==================================================
+  QUY MO KIEM THU: 10000 MAT HANG
+==================================================
+ - Chieu cao cay AVL (10000 nut): 14
+ - So truy van khop: 1000/1000 (1000 truy van; 9 lan do)
+ - Trung vi AVL:     192.745 microseconds / 1000 truy van
+ - Trung vi Vector (sorted + lower_bound): 122.081 microseconds / 1000 truy van
+ ==> Vector/AVL (tim kiem): 0.63 lan
+ - Them 100 khoa | AVL: 14.231 us | Vector sorted: 4321.075 us
+ - Xoa  100 khoa | AVL: 32.068 us | Vector sorted: 2181.564 us
+
+==================================================
+  QUY MO KIEM THU: 50000 MAT HANG
+==================================================
+ - Chieu cao cay AVL (50000 nut): 16
+ - So truy van khop: 1000/1000 (1000 truy van; 9 lan do)
+ - Trung vi AVL:     284.702 microseconds / 1000 truy van
+ - Trung vi Vector (sorted + lower_bound): 187.238 microseconds / 1000 truy van
+ ==> Vector/AVL (tim kiem): 0.66 lan
+ - Them 100 khoa | AVL: 21.362 us | Vector sorted: 21464.294 us
+ - Xoa  100 khoa | AVL: 129.231 us | Vector sorted: 10705.357 us
+
+==================================================
+  QUY MO KIEM THU: 100000 MAT HANG
+==================================================
+ - Chieu cao cay AVL (100000 nut): 17
+ - So truy van khop: 1000/1000 (1000 truy van; 9 lan do)
+ - Trung vi AVL:     389.176 microseconds / 1000 truy van
+ - Trung vi Vector (sorted + lower_bound): 216.581 microseconds / 1000 truy van
+ ==> Vector/AVL (tim kiem): 0.56 lan
+ - Them 100 khoa | AVL: 23.595 us | Vector sorted: 40817.120 us
+ - Xoa  100 khoa | AVL: 177.273 us | Vector sorted: 21948.953 us
+
+==================================================
+Kiem thu hieu nang hoan tat thanh cong!
