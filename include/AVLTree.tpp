@@ -151,6 +151,25 @@ template <typename K, typename V>
 AVLTree<K, V>::~AVLTree() { clear(); }
 
 template <typename K, typename V>
+AVLTree<K, V>::AVLTree(AVLTree&& other) noexcept
+    : root(other.root), nodeCount(other.nodeCount) {
+    other.root = nullptr;
+    other.nodeCount = 0;
+}
+
+template <typename K, typename V>
+AVLTree<K, V>& AVLTree<K, V>::operator=(AVLTree&& other) noexcept {
+    if (this != &other) {
+        clear();
+        root = other.root;
+        nodeCount = other.nodeCount;
+        other.root = nullptr;
+        other.nodeCount = 0;
+    }
+    return *this;
+}
+
+template <typename K, typename V>
 void AVLTree<K, V>::destroyTree(AVLNode<K, V>* node) {
     if (!node) return;
     destroyTree(node->left);
@@ -183,8 +202,14 @@ bool AVLTree<K, V>::remove(const K& key) {
 }
 
 template <typename K, typename V>
-V* AVLTree<K, V>::search(const K& key) const {
+V* AVLTree<K, V>::search(const K& key) {
     AVLNode<K, V>* n = searchNode(root, key);
+    return n ? &n->value : nullptr;
+}
+
+template <typename K, typename V>
+const V* AVLTree<K, V>::search(const K& key) const {
+    const AVLNode<K, V>* n = searchNode(root, key);
     return n ? &n->value : nullptr;
 }
 
