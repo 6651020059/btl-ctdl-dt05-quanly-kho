@@ -1,0 +1,92 @@
+% ============================================================================
+% Chuong 4 - ket qua benchmark chay lai tren cung mot moi truong
+% ============================================================================
+\chapter{Thực nghiệm và Đánh giá Hiệu năng}
+
+\section{Mục tiêu thực nghiệm}
+Chương này so sánh chi phí tìm kiếm chính xác theo mã hàng của cây AVL với vector đã sắp xếp sử dụng \texttt{std::lower\_bound}. Đây là baseline công bằng hơn so với duyệt tuyến tính: cả hai phương pháp đều khai thác thứ tự khóa và có số phép so sánh tăng theo logarithm. Ngoài tìm kiếm, benchmark đo riêng 100 lần chèn và 100 lần xóa để thể hiện chi phí cập nhật của hai cấu trúc.
+
+\section{Môi trường và phương pháp đo}
+Lần chạy được thực hiện ngày 31/10/2026 trong môi trường Linux x86\_64, nhân 6.18.57, GCC 14.2.0, 3 CPU logic được cấp cho container; cờ biên dịch là \texttt{-std=c++11 -O2 -Wall -Wextra}. Đây là môi trường ảo hóa/container, không phải phép đo trên máy demo của nhóm. Vì vậy, thời gian tuyệt đối có thể khác trên máy cá nhân hoặc máy giảng viên.
+
+Chương trình tạo lần lượt 1.000, 10.000, 50.000 và 100.000 mặt hàng. Cả AVL và vector được nạp cùng tập mã khóa. Vector luôn được duy trì theo thứ tự tăng dần; tìm kiếm dùng \texttt{lower\_bound}. Một tập 1.000 khóa đã tồn tại, được sinh bằng \texttt{std::mt19937} với seed 2026, được dùng chung cho hai cấu trúc. Sau một lượt làm nóng, mỗi phương pháp được đo 9 lần bằng \texttt{steady\_clock}; báo cáo lấy trung vị thời gian tổng của 1.000 truy vấn. Chèn và xóa cũng được đo riêng: mỗi lượt gồm 100 thao tác trên bản sao dữ liệu đã chuẩn bị trước, đo 9 lần và lấy trung vị. Thời gian khởi tạo/copy cấu trúc không được tính vào khoảng đo cập nhật.
+
+\section{Kết quả đo tìm kiếm}
+Bảng~\ref{tab:benchmark_search} trình bày trung vị tổng thời gian của 1.000 truy vấn. Tất cả truy vấn đều tìm thấy khóa tương ứng ở cả hai cấu trúc.
+
+\begin{table}[H]
+\centering
+\caption{Trung vị thời gian tìm kiếm 1.000 khóa (9 lần đo)}
+\label{tab:benchmark_search}
+\small
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+\textbf{Số mặt hàng} & \textbf{Chiều cao AVL} & \textbf{AVL ($\mu$s)} & \textbf{Vector + lower\_bound ($\mu$s)} & \textbf{Vector/AVL} \\
+\midrule
+1.000   & 10 & 100,089 & 64,496  & 0,64 lần \\
+10.000  & 14 & 192,745 & 122,081 & 0,63 lần \\
+50.000  & 16 & 284,702 & 187,238 & 0,66 lần \\
+100.000 & 17 & 389,176 & 216,581 & 0,56 lần \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Kết quả đo chèn và xóa}
+Bảng~\ref{tab:benchmark_update} ghi nhận tổng thời gian của 100 thao tác chèn hoặc xóa. Các thao tác trên vector dùng tìm vị trí bằng \texttt{lower\_bound}, sau đó \texttt{insert}/\texttt{erase} phải dịch chuyển phần tử để giữ thứ tự.
+
+\begin{table}[H]
+\centering
+\caption{Trung vị thời gian của 100 thao tác cập nhật (9 lần đo)}
+\label{tab:benchmark_update}
+\small
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+\textbf{Số mặt hàng} & \textbf{AVL chèn ($\mu$s)} & \textbf{Vector chèn ($\mu$s)} & \textbf{AVL xóa ($\mu$s)} & \textbf{Vector xóa ($\mu$s)} \\
+\midrule
+1.000   & 10,816 & 323,700   & 12,438  & 188,830 \\
+10.000  & 14,231 & 4.321,075 & 32,068  & 2.181,564 \\
+50.000  & 21,362 & 21.464,294 & 129,231 & 10.705,357 \\
+100.000 & 23,595 & 40.817,120 & 177,273 & 21.948,953 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Trực quan hóa kết quả tìm kiếm}
+Biểu đồ~\ref{fig:chart_tv4} so sánh hai phương pháp tìm kiếm bằng thang logarit. Vector đã sắp xếp nhanh hơn trong lần chạy này, dù cả hai phương pháp đều có độ phức tạp tìm kiếm logarithm theo số phần tử.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  ybar, bar width=13pt, width=0.92\textwidth, height=8cm,
+  ylabel={Thời gian cho 1.000 truy vấn ($\mu$s, log)},
+  xlabel={Quy mô dữ liệu}, symbolic x coords={1k,10k,50k,100k}, xtick=data,
+  ymode=log, log basis y=10, ymin=30, ymax=400,
+  legend style={at={(0.5,-0.2)},anchor=north,legend columns=2},
+  grid=major, enlarge x limits=0.2
+]
+\addplot coordinates {(1k,100.089) (10k,192.745) (50k,284.702) (100k,389.176)};
+\addplot coordinates {(1k,64.496) (10k,122.081) (50k,187.238) (100k,216.581)};
+\legend{AVL, Vector + lower\_bound}
+\end{axis}
+\end{tikzpicture}
+\caption{So sánh thời gian tìm kiếm bằng AVL và vector đã sắp xếp}
+\label{fig:chart_tv4}
+\end{figure}
+
+\section{Phân tích kết quả và liên hệ độ phức tạp}
+Ở quy mô 100.000 mặt hàng, AVL có chiều cao 17 và cần 389,176 $\mu$s cho 1.000 truy vấn; vector đã sắp xếp với \texttt{lower\_bound} cần 216,581 $\mu$s. Trong lần đo này, vector nhanh hơn khoảng 1,79 lần. Kết quả không mâu thuẫn với độ phức tạp lý thuyết: tìm kiếm trên AVL là $O(\log n)$ theo chiều cao cây, còn tìm kiếm nhị phân trên vector đã sắp xếp cũng là $O(\log n)$.
+
+Chênh lệch thời gian thực tế chịu ảnh hưởng của hằng số chi phí và kiến trúc bộ nhớ. Vector lưu phần tử liên tục nên tận dụng locality/cache tốt hơn; thao tác nhị phân thường truy cập ít vùng nhớ và không cần lần theo con trỏ node. AVL phải đi qua các node được cấp phát rời rạc, nên pointer chasing và cache miss có thể làm tăng độ trễ dù chiều cao cây nhỏ. Do vậy, không thể kết luận rằng AVL luôn nhanh hơn vector trong mọi tác vụ chỉ dựa vào ký hiệu $O(\log n)$.
+
+Ở chiều ngược lại, cập nhật trên vector phải dịch chuyển các phần tử để duy trì thứ tự. Tại 100.000 mặt hàng, 100 lần chèn mất 40.817,120 $\mu$s trên vector so với 23,595 $\mu$s trên AVL; 100 lần xóa mất 21.948,953 $\mu$s trên vector so với 177,273 $\mu$s trên AVL. Số đo cho thấy cấu trúc phù hợp phụ thuộc vào tỷ lệ đọc/ghi: vector có lợi thế tra cứu trong bộ nhớ liên tục, còn cây AVL phù hợp hơn khi cần cập nhật thường xuyên và duy trì thứ tự khóa.
+
+\section{Giới hạn của phép đo}
+Kết quả là trung vị của 9 lần đo trong một môi trường container, với một bộ dữ liệu và các truy vấn thành công. Benchmark chưa đo truy vấn không tìm thấy, RAM, cấp phát bộ nhớ, lưu file, tải đồng thời, hoặc độ trễ từ thao tác người dùng. Mức nhiễu do lịch CPU, cache, compiler và cấu hình máy vẫn có thể ảnh hưởng. Vì vậy, số liệu chỉ mô tả lần chạy kèm gói bàn giao, không phải cam kết hiệu năng trên máy khác.
+
+\section{Trích xuất đầu ra benchmark}
+Đầu ra stdout thực tế của lần chạy được lưu tại \texttt{benchmark\_console.txt}. Có thể đối chiếu trực tiếp các giá trị trong bảng với tệp log này.
+\lstinputlisting[caption={Trích đoạn stdout của lần benchmark đã chạy},firstline=1,lastline=42]{benchmark_console.txt}
+
+\section{Kết luận chương}
+Trong lần thực nghiệm này, AVL và vector đã sắp xếp có hiệu năng tìm kiếm cùng mức độ tăng trưởng logarithm; vector nhanh hơn về tra cứu nhờ tính cục bộ bộ nhớ, trong khi AVL có lợi thế rõ rệt ở các phép cập nhật được đo. AVL vẫn là cấu trúc lõi phù hợp với yêu cầu quản lý kho có thêm/xóa mặt hàng, nhưng quyết định cuối cùng cần xét đồng thời tỷ lệ đọc/ghi, bộ nhớ và yêu cầu nghiệp vụ.
