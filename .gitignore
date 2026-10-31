@@ -1,41 +1,29 @@
-# Biên dịch C++
+# Compiled binaries & object files
 *.o
 *.obj
 *.exe
 *.out
-*.a
-*.so
-quanlykho
-build/
-bin/
+*.app
+main_app
+benchmark_app
+test_suite
+test_fileio
+test_kho
+test_hoadon
 
-# IDE
-.vscode/
-.vs/
-.idea/
-*.cbp
-*.layout
-*.depend
-*.user
+# Runtime binary data & temporary test files
+*.dat
+*.tmp
+ket_qua_test.txt
 
-# LaTeX
+# LaTeX auxiliary files
 *.aux
 *.log
 *.toc
 *.lof
 *.lot
+*.out
 *.synctex.gz
-*.bbl
-*.blg
-*.fls
-*.fdb_latexmk
-*.nav
-*.snm
-*.vrb
 
-# Dữ liệu sinh ra khi đo hiệu năng
-data/generated/
-
-# Hệ điều hành
-.DS_Store
-Thumbs.db
+# Bản sao lưu kho.dat hỏng do chương trình tạo ra
+kho.dat.hong*
