@@ -51,101 +51,27 @@ struct HoaDon {
 \subsection{Thiết kế Nguyên mẫu Hàm (Header Modules)}
 
 \subsubsection{Phân hệ Lập Hóa đơn và Tương tác Cây AVL (\texttt{lap\_hoa\_don.h})}
-\begin{lstlisting}[language=C++, caption={Khai báo nguyên mẫu lập hóa đơn tích hợp Cây AVL}]
-#ifndef LAP_HOA_DON_H
-#define LAP_HOA_DON_H
-
-#include <vector>
-#include <string>
-#include "mathang.h"
-#include "hoadon.h"
-#include "AVLTree.h"
-
-void lapHoaDon(AVLTree<std::string, MatHang>& kho, std::vector<HoaDon>& danhSachHoaDon);
-bool kiemTraHetHang(const MatHang& mh, int soLuongMua);
-void truTonTuDong(MatHang& mh, int soLuongMua);
-void hienThiDanhSachHoaDon(const std::vector<HoaDon>& danhSachHoaDon);
-
-#endif
-\end{lstlisting}
+Trong bản tích hợp hiện tại, alias \texttt{KhoHang} được khai báo tập trung trong \texttt{khohang.h}; module hóa đơn nhận tham chiếu đến alias này thay vì lặp lại kiểu \texttt{AVLTree<std::string, MatHang>} ở từng header. Trích đoạn header thực tế:
+\lstinputlisting[language=C++,caption={Giao diện module lập hóa đơn trong bản tích hợp},firstline=1,lastline=14]{../../include/lap_hoa_don.h}
 
 \subsubsection{Phân hệ Thống kê Doanh thu (\texttt{thongkedoanhthu.h})}
-\begin{lstlisting}[language=C++, caption={Khai báo nguyên mẫu hàm thống kê doanh thu}]
-#ifndef THONGKEDOANHTHU_H
-#define THONGKEDOANHTHU_H
-
-#include <vector>
-#include "hoadon.h"
-#include "ngay.h"
-
-void thongKeDoanhThuTheoNgay(const std::vector<HoaDon>& danhSachHoaDon);
-void thongKeDoanhThuTheoThang(const std::vector<HoaDon>& danhSachHoaDon);
-void menuThongKeDoanhThu(const std::vector<HoaDon>& danhSachHoaDon);
-
-#endif
-\end{lstlisting}
+Các hàm thống kê nhận danh sách hóa đơn ở dạng tham chiếu hằng, không trực tiếp thay đổi dữ liệu đã ghi nhận:
+\lstinputlisting[language=C++,caption={Giao diện module thống kê doanh thu},firstline=1,lastline=14]{../../include/thongkedoanhthu.h}
 
 \subsubsection{Phân hệ Thống kê Top Mặt hàng Bán chạy (\texttt{thongketop.h})}
-\begin{lstlisting}[language=C++, caption={Mã nguồn chi tiết phân hệ thống kê top mặt hàng bán chạy}]
-struct ThongKeMatHang {
-    string maHang;
-    int tongSoLuongBan;
-    long long tongDoanhThuMatHang;
-};
+Mỗi phần tử thống kê được khởi tạo các bộ đếm về 0. Hàm so sánh được khai báo \texttt{inline}; thứ tự xếp hạng là số lượng bán giảm dần, doanh thu giảm dần khi số lượng bằng nhau, sau đó là mã hàng tăng dần để kết quả ổn định:
+\lstinputlisting[language=C++,caption={Cấu trúc thống kê và tiêu chí sắp xếp Top N},firstline=21,lastline=36]{../../include/thongketop.h}
 
-static bool soSanhBanChay(const ThongKeMatHang& a, const ThongKeMatHang& b) {
-    if (a.tongSoLuongBan != b.tongSoLuongBan) {
-        return a.tongSoLuongBan > b.tongSoLuongBan;
-    }
-    return a.tongDoanhThuMatHang > b.tongDoanhThuMatHang;
-}
-
-inline void thongKeTopMatHangBanChay(const vector<HoaDon>& danhSachHoaDon, const KhoHang& kho) {
-    if (danhSachHoaDon.empty()) {
-        cout << "\n[Thong bao] He thong chua co du lieu hoa don nao de thong ke!\n";
-        return;
-    }
-
-    map<string, ThongKeMatHang> mapThongKe;
-    for (size_t i = 0; i < danhSachHoaDon.size(); ++i) {
-        const HoaDon& hd = danhSachHoaDon[i];
-        for (int j = 0; j < hd.soLuongChiTiet; ++j) {
-            const ChiTietHoaDon& ct = hd.danhSachChiTiet[j];
-            string ma(ct.maHang);
-            mapThongKe[ma].maHang = ma;
-            mapThongKe[ma].tongSoLuongBan += ct.soLuongMua;
-            mapThongKe[ma].tongDoanhThuMatHang += (long long)ct.soLuongMua * ct.donGia;
-        }
-    }
-
-    vector<ThongKeMatHang> danhSachThongKe;
-    for (map<string, ThongKeMatHang>::const_iterator it = mapThongKe.begin(); it != mapThongKe.end(); ++it) {
-        danhSachThongKe.push_back(it->second);
-    }
-    sort(danhSachThongKe.begin(), danhSachThongKe.end(), soSanhBanChay);
-    // In bang Top N mat hang ban chay va tra cuu ten hang qua kho.search(tk.maHang)
-}
-\end{lstlisting}
+Dữ liệu được gom nhóm theo mã hàng bằng \texttt{std::map}; sau đó chuyển sang vector và sắp xếp theo comparator trên. Hàm tra cứu tên mặt hàng thông qua \texttt{kho.search()} trước khi in bảng Top N:
+\lstinputlisting[language=C++,caption={Gom nhóm dữ liệu hóa đơn và sắp xếp danh sách thống kê},firstline=45,lastline=67]{../../include/thongketop.h}
 
 \subsubsection{Chương trình Kiểm thử Hiệu năng Benchmark (\texttt{Chuongtrinhsinhvadodulieu.h})}
-\begin{lstlisting}[language=C++, caption={Chương trình sinh dữ liệu và đo đạc benchmark thực tế}]
-inline void chayToanBoBenchmark() {
-    std::cout << "\n==================================================\n";
-    std::cout << "   CHUONG TRINH BENCHMARK HIEU NANG AVL\n";
-    std::cout << "==================================================\n";
-
-    thucHienDoBenchmark(1000);
-    thucHienDoBenchmark(10000);
-    thucHienDoBenchmark(100000);
-
-    std::cout << "\n==================================================\n";
-    std::cout << "Kiem thu hieu nang hoan tat thanh cong!\n";
-}
-\end{lstlisting}
+Benchmark hiện chạy ở bốn quy mô 1.000, 10.000, 50.000 và 100.000 mặt hàng. Mỗi quy mô dùng 1.000 truy vấn, 9 lần đo và lấy trung vị; ngoài tìm kiếm, chương trình đo 100 lần chèn và 100 lần xóa trên cả AVL và vector đã sắp xếp:
+\lstinputlisting[language=C++,caption={Các quy mô dữ liệu được gọi trong benchmark},firstline=197,lastline=208]{../../include/Chuongtrinhsinhvadodulieu.h}
 
 \subsection{Giải thích Giải thuật và Thiết kế Kỹ thuật}
 \begin{itemize}
-    \item \textbf{Tương tác Cây AVL tối ưu $O(\log n)$:} Module lập hóa đơn sử dụng tham chiếu đến \texttt{AVLTree<string, MatHang>\& kho}, cho phép gọi phương thức \texttt{search()} để tra cứu thông tin sản phẩm và cập nhật trực tiếp lượng tồn kho trên cây với độ phức tạp đạt $O(\log n)$.
+    \item \textbf{Tương tác Cây AVL tối ưu $O(\log n)$:} Module lập hóa đơn sử dụng tham chiếu đến \texttt{KhoHang\& kho} (alias của \texttt{AVLTree<std::string, MatHang>}), gọi \texttt{search()} để tra cứu sản phẩm theo mã và cập nhật lượng tồn trên cây; thao tác tìm kiếm có độ phức tạp $O(\log n)$.
     \item \textbf{Quản lý danh sách chi tiết an toàn:} Giới hạn mảng tĩnh tối đa 20 phần tử cho mỗi hóa đơn giúp kiểm soát tốt bộ nhớ, kết hợp constructor khởi tạo an toàn bằng \texttt{std::memset} và kiểu dữ liệu \texttt{long long} cho đơn giá và tổng tiền nhằm tránh triệt để hiện tượng tràn số tài chính.
-    \item \textbf{Gom nhóm và Sắp xếp hiệu quả:} Thuật toán thống kê top sử dụng \texttt{std::map<string, ThongKeMatHang>} để tự động cộng dồn số lượng và doanh thu theo từng mã hàng xuyên suốt các hóa đơn, sau đó chuyển sang \texttt{std::vector} để sắp xếp nhanh chóng thông qua hàm \texttt{std::sort}.
+    \item \textbf{Gom nhóm và Sắp xếp hiệu quả:} Thuật toán thống kê Top dùng \texttt{std::map} để cộng dồn số lượng và doanh thu theo mã hàng, sau đó chuyển dữ liệu sang \texttt{std::vector} và sắp xếp bằng \texttt{std::sort}. Khi số lượng bán bằng nhau, comparator so sánh doanh thu; nếu vẫn bằng nhau, mã hàng tăng dần được dùng làm tiêu chí phụ.
 \end{itemize}

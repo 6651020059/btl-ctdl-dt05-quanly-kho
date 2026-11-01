@@ -2,31 +2,34 @@
 \addcontentsline{toc}{chapter}{Kết luận}
 
 \section*{Kết quả đạt được}
-Nhóm đã xây dựng bản tích hợp hệ thống quản lý hàng tồn kho và doanh thu siêu thị sử dụng cây AVL tự cài đặt làm cấu trúc dữ liệu lõi. Trên phiên bản mã nguồn được ghép từ năm gói thành viên và cập nhật trong đợt này, các kết quả có thể kiểm chứng gồm:
+Nhóm đã tích hợp hệ thống quản lý hàng tồn kho và doanh thu siêu thị bằng C++11, sử dụng cây AVL tự cài đặt làm cấu trúc dữ liệu lõi cho danh mục mặt hàng. Trên bản mã nguồn ghép từ năm gói TV1--TV5, các kết quả kỹ thuật đã được kiểm tra lại gồm:
 \begin{itemize}
-  \item Cài đặt \texttt{AVLTree<K,V>} với thêm, xóa, tìm kiếm, duyệt, range search, kích thước/chiều cao và kiểm tra rỗng. Bộ kiểm thử cập nhật đạt 35/35 ca, trong đó có kiểm tra tính \texttt{const} của kết quả tìm kiếm và move constructor/assignment.
-  \item Module kho hỗ trợ CRUD, nhập/xuất, chặn xuất quá tồn, kiểm tra tràn số khi nhập, kiểm tra ngày theo lịch và nạp CSV có xác thực từng dòng. Các kịch bản tích hợp kho hiện có chạy đạt.
-  \item Module hóa đơn chỉ trừ tồn sau khi người dùng xác nhận toàn bộ giao dịch; EOF hoặc từ chối xác nhận hủy hóa đơn và giữ nguyên tồn kho. Mã hóa đơn trùng, số lượng không hợp lệ, dòng hàng lặp và tổng tiền vượt giới hạn được kiểm tra. Bộ test hóa đơn--doanh thu đạt 55/55 ca.
-  \item Module FileIO kiểm tra magic/version, kích thước, mã hàng trùng, trường dữ liệu mặt hàng và chi tiết hóa đơn; khi ghi, vùng đệm của struct được khởi tạo trước khi tuần tự hóa. Các ca FileIO được mở rộng và chạy đạt.
-  \item Makefile đã theo dõi phụ thuộc header qua \texttt{-MMD -MP}, có target \texttt{asan}; bộ test khởi động đạt 12/12 ca và xác nhận file kho hỏng không bị tự động ghi đè.
+  \item Cài đặt \texttt{AVLTree<K,V>} với thêm, xóa, tìm kiếm, duyệt trung thứ tự, range search, kích thước, chiều cao, kiểm tra rỗng và giải phóng cây. Bộ kiểm thử AVL đạt 35/35 ca, gồm các phép quay, xóa, range search, overload \texttt{search() const} và move constructor/assignment.
+  \item Module kho hỗ trợ CRUD, nạp 50 mặt hàng từ CSV, nhập/xuất có kiểm soát, chặn xuất vượt tồn, kiểm tra tràn số khi nhập, kiểm tra ngày theo lịch và cảnh báo tồn tối thiểu. Bộ kiểm thử kho chạy đủ các nhóm kiểm tra được ghi trong mã test.
+  \item Module hóa đơn chỉ trừ tồn sau khi người dùng xác nhận toàn bộ giao dịch; EOF hoặc hủy xác nhận không tạo hóa đơn và không thay đổi tồn. Các trường hợp mã hóa đơn trùng, số lượng không hợp lệ, dòng hàng lặp, giới hạn 20 dòng và tổng tiền được kiểm tra. Bộ test hóa đơn--doanh thu đạt 55/55 ca.
+  \item Module FileIO kiểm tra magic/version, kích thước file, kích thước bản ghi, dữ liệu mặt hàng, mã trùng và tính hợp lệ của chi tiết hóa đơn. Khi nạp file lỗi, trạng thái kho đang sử dụng được giữ nguyên. Bộ test FileIO đạt 13/13 kiểm tra.
+  \item Makefile theo dõi phụ thuộc header bằng \texttt{-MMD -MP}, có các đích \texttt{all}, \texttt{test}, \texttt{asan} và \texttt{clean}. Bài kiểm thử khởi động đạt 12/12 ca, trong đó có kiểm tra không tự ghi đè file \texttt{kho.dat} hỏng.
 \end{itemize}
 
 \section*{Kết quả benchmark}
-Lần benchmark cập nhật ngày 31/10/2026 chạy với GCC 14.2.0 trên Linux x86\_64, container được cấp 3 CPU logic. Mỗi cấu trúc thực hiện cùng 1.000 truy vấn; chạy làm nóng trước, đo 9 lần và lấy trung vị. Ở 100.000 mặt hàng, AVL có chiều cao 17 và mất 389,176 $\mu$s; vector đã sắp xếp với \texttt{lower\_bound} mất 216,581 $\mu$s cho 1.000 truy vấn. Như vậy vector nhanh hơn khoảng 1,79 lần trong phép đo tìm kiếm này, phù hợp với lợi thế locality/cache của vùng nhớ liên tục; cả hai phương pháp đều có chi phí tìm kiếm logarithm.
+Bảng benchmark trong báo cáo được ghi nhận từ lần chạy ngày 31/10/2026 trên Linux x86\_64 với GCC 14.2.0 và 3 CPU logic được cấp cho container. Mỗi cấu trúc thực hiện cùng 1.000 truy vấn; chương trình làm nóng trước, đo 9 lần và lấy trung vị. Ở 100.000 mặt hàng, AVL có chiều cao 17 và mất 389,176 $\mu$s; vector đã sắp xếp với \texttt{lower\_bound} mất 216,581 $\mu$s cho 1.000 truy vấn. Trong lần đo này, vector nhanh hơn khoảng 1,79 lần ở tác vụ tìm kiếm. Đây là kết quả của môi trường đo cụ thể, không phải cam kết hiệu năng trên máy khác.
 
-Với 100 thao tác cập nhật tại 100.000 mặt hàng, AVL mất 23,595 $\mu$s cho chèn và 177,273 $\mu$s cho xóa; vector đã sắp xếp lần lượt mất 40.817,120 $\mu$s và 21.948,953 $\mu$s do phải dịch chuyển phần tử. Kết quả cho thấy không thể kết luận AVL luôn nhanh hơn trong mọi tác vụ; lợi thế của mỗi cấu trúc phụ thuộc vào tỷ lệ tra cứu/cập nhật. Các bảng và phương pháp đo chi tiết nằm ở Chương 4, dữ liệu stdout được lưu trong \texttt{benchmark\_console.txt}.
+Với 100 thao tác cập nhật ở quy mô 100.000 mặt hàng, AVL mất 23,595 $\mu$s cho chèn và 177,273 $\mu$s cho xóa; vector đã sắp xếp lần lượt mất 40.817,120 $\mu$s và 21.948,953 $\mu$s. Kết quả cho thấy không có cấu trúc nào nhanh hơn trong mọi tác vụ: vector có lợi thế locality/cache ở truy vấn tìm kiếm, còn AVL phù hợp hơn với cập nhật cần duy trì thứ tự khóa. Dữ liệu và phương pháp đo chi tiết nằm ở Chương 4; đầu ra benchmark được lưu trong \texttt{benchmark\_console.txt}.
 
 \section*{Hạn chế}
 \begin{itemize}
-  \item Ứng dụng vẫn là giao diện console, chưa có xác thực, phân quyền hoặc giao diện đồ họa.
-  \item Dữ liệu kho được lưu bằng định dạng nhị phân gắn với cách bố trí struct của bản build; chưa phải định dạng trao đổi độc lập nền tảng.
-  \item Tra cứu theo khoảng giá vẫn phải duyệt dữ liệu vì cây AVL hiện được khóa theo mã hàng; chưa có chỉ mục phụ theo giá.
+  \item Sản phẩm hiện tại là ứng dụng giao diện dòng lệnh (console), chưa có giao diện web, API HTTP, xác thực người dùng hoặc phân quyền.
+  \item Dữ liệu được lưu theo biểu diễn nhị phân của các struct trong bản build. Header kiểm tra kích thước bản ghi nhưng định dạng vẫn chịu ảnh hưởng compiler/ABI, chưa phải định dạng trao đổi độc lập nền tảng.
+  \item Cây AVL hiện được khóa theo mã hàng; lọc theo khoảng giá phải duyệt danh mục nên có độ phức tạp $O(n)$.
   \item Mỗi hóa đơn giới hạn tối đa 20 dòng chi tiết.
-  \item Benchmark được thực hiện trong một môi trường container và với một bộ truy vấn; chưa đánh giá RAM, truy vấn thất bại, tải đồng thời hay thời gian lưu file.
+  \item Một số hàm nghiệp vụ vẫn gắn với nhập/xuất console; việc tách hoàn toàn nghiệp vụ khỏi giao diện chưa hoàn tất.
+  \item Benchmark mới khảo sát một môi trường container và tập truy vấn thành công; chưa đo RAM, truy vấn không tìm thấy, tải đồng thời, thời gian lưu file hoặc độ trễ trên máy demo.
 \end{itemize}
 
-\section*{Công việc cần xác nhận trước khi nộp}
-Các gói file có thể chứng minh mã nguồn, nội dung LaTeX, slide, kịch bản demo và kết quả build/test trong môi trường hiện tại. Tuy nhiên, chúng không cung cấp lịch sử commit, dữ liệu Jira, URL/trạng thái pull request, email gửi giảng viên, biên nhận nộp bài hoặc biên bản tập dượt/đọc chéo. Vì vậy, nhóm cần thực hiện và lưu những bằng chứng này trực tiếp trước khi đánh dấu các task quy trình là hoàn tất. Tỷ lệ đóng góp của từng người phải được tính từ commit và công việc thực tế, không tự đặt mặc định.
+\section*{Tình trạng công việc và minh chứng}
+Tệp kế hoạch \texttt{KeHoach\_BTL\_DT05\_ChiTiet.xlsx} trong gói bàn giao có 53 task từ T01 đến T53. Tại bản lưu ngày 31/10/2026, sheet \texttt{Task chi tiết} ghi 29 task \texttt{Done}, 13 task \texttt{In Progress} và 11 task \texttt{To do}. Đây là trạng thái trong bảng kế hoạch được gửi kèm, không phải bản xuất Jira độc lập. Một bản LaTeX được cung cấp sau đó có nêu rằng Jira ghi nhận 53/53 task Done ngày 01/11/2026, nhưng bản xuất Jira tương ứng chưa nằm trong các tệp nguồn hiện có; vì vậy báo cáo này không coi tuyên bố đó là trạng thái đã được kiểm chứng.
+
+Các gói mã nguồn chứng minh được cấu trúc dự án, nội dung báo cáo, slide, kịch bản demo và kết quả build/test trong môi trường kiểm tra. Những minh chứng quy trình vẫn cần lưu riêng gồm lịch sử commit theo thành viên, URL/trạng thái pull request, email hoặc biên nhận chia sẻ LaTeX cho giảng viên, biên bản tập dượt T52, phiếu đọc chéo T53 và biên nhận nộp bài. Không quy đổi số task hoặc số dòng code thành tỷ lệ đóng góp cá nhân.
 
 \section*{Hướng phát triển}
-Các hướng mở rộng gồm xây dựng chỉ mục phụ theo đơn giá; chuyển sang cơ sở dữ liệu có giao dịch; chuẩn hóa định dạng lưu file độc lập ABI và có checksum; thêm kiểm thử bộ nhớ; bổ sung tìm kiếm theo tên/nhóm hàng; xây dựng giao diện đồ họa hoặc web; và mở rộng benchmark sang truy vấn thất bại, bộ nhớ, tải đồng thời cũng như các phân phối dữ liệu khác.
+Các hướng mở rộng gồm tách lớp nghiệp vụ khỏi console; xây dựng API và giao diện web; bổ sung cơ sở dữ liệu có giao dịch; thêm chỉ mục phụ theo đơn giá; chuẩn hóa định dạng lưu file độc lập ABI, có checksum và cơ chế chuyển đổi schema; bổ sung kiểm thử bộ nhớ; tìm kiếm theo tên/nhóm hàng; và mở rộng benchmark sang truy vấn thất bại, bộ nhớ, tải đồng thời cùng các phân phối dữ liệu khác.

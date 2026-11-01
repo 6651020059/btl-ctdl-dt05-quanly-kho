@@ -1,9 +1,9 @@
 % ============================================================================
 % main.tex - Báo cáo Bài tập lớn CTDL&GT - ĐT05
 % Người dựng khung: TV1. Dịch bằng XeLaTeX:  xelatex main.tex  (chạy 2 lần)
-% Chương chưa có file thì được bỏ qua (\chen), nên ai cũng biên dịch được.
+% Tất cả chương/phụ lục là thành phần bắt buộc của báo cáo tích hợp.
 % ============================================================================
-\documentclass[13pt,a4paper]{extreport}
+\documentclass[11pt,a4paper]{extreport}
 \usepackage[top=2.5cm,bottom=2.5cm,left=3cm,right=2cm]{geometry}
 \usepackage{fontspec}
 \IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}
@@ -15,7 +15,7 @@
 \usepackage{amsmath,amssymb,tikz,pgfplots,graphicx,booktabs,array,caption,float,setspace,titlesec,hyperref,listings,xcolor}
 \pgfplotsset{compat=1.18}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
-\hypersetup{hidelinks}
+\hypersetup{hidelinks,pdftitle={ĐT05 - Quản lý hàng tồn kho và doanh thu siêu thị},pdfauthor={Nhóm ĐT05}}
 \onehalfspacing
 \setlength{\parindent}{1cm}
 \setlength{\parskip}{3pt}
@@ -34,8 +34,7 @@
   showstringspaces=false
 }
 
-% Chèn file nếu tồn tại, nếu chưa có thì in nhắc việc (không làm lỗi biên dịch)
-\newcommand{\chen}[1]{\IfFileExists{#1.tex}{\input{#1}}{\par\textbf{[Chưa có file \texttt{\detokenize{#1}.tex}]}\par}}
+% Các chương/phụ lục là thành phần bắt buộc; thiếu tệp sẽ làm biên dịch dừng.
 
 \begin{document}
 
@@ -63,7 +62,7 @@ Thành viên: & TV1 -- Đoàn Quốc Nhật -- 6651020059 (Nhóm trưởng)\\
 \end{titlepage}
 
 \pagenumbering{roman}
-\chen{loimoidau}
+\input{loimoidau}
 \tableofcontents
 \clearpage
 \listoffigures
@@ -72,18 +71,18 @@ Thành viên: & TV1 -- Đoàn Quốc Nhật -- 6651020059 (Nhóm trưởng)\\
 \pagenumbering{arabic}
 
 % ---------------- Nội dung ----------------
-\chen{chuong1_kho}
+\input{chuong1_kho}
 
-\chen{chuong2_avl}
+\input{chuong2_avl}
 
 \chapter{Cài đặt chương trình}
-\chen{chuong3_kho}
-\chen{chuong3_doanhthu}
-\chen{chuong3_file_giaodien}
+\input{chuong3_kho}
+\input{chuong3_doanhthu}
+\input{chuong3_file_giaodien}
 
-\chen{chuong4_benchmark}
+\input{chuong4_benchmark}
 
-\chen{ketluan}
+\input{ketluan}
 
 \begin{thebibliography}{9}
 \bibitem{clrs} T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, \textit{Introduction to Algorithms}, 4th ed., MIT Press, 2022.
@@ -92,6 +91,6 @@ Thành viên: & TV1 -- Đoàn Quốc Nhật -- 6651020059 (Nhóm trưởng)\\
 \bibitem{stroustrup} B. Stroustrup, \textit{The C++ Programming Language}, 4th ed., Addison-Wesley, 2013.
 \end{thebibliography}
 
-\chen{phuluc_phancong}
-\chen{phuluc_kiemthu}
+\input{phuluc_phancong}
+\input{phuluc_kiemthu}
 \end{document}

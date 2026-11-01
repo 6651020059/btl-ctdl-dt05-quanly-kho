@@ -1,4 +1,4 @@
-\section{Thiết kế và Cài đặt Module Lưu trữ File Nhị phân và Giao diện Console}
+\section{Thiết kế Module Lưu trữ Nhị phân và Giao diện Console}
 
 \subsection{Mục tiêu và ranh giới lưu trữ}
 Module FileIO cung cấp lớp biên giữa dữ liệu đang nằm trong RAM và dữ liệu bền vững trên đĩa. Module không phụ thuộc trực tiếp vào chi tiết nút của cây AVL; hàm lưu lấy danh sách đã duyệt theo thứ tự thông qua \texttt{inorder()}, còn hàm nạp nhận lại các mặt hàng rồi gọi \texttt{clear()} và \texttt{insert()} trên cấu trúc kho. Cách thiết kế này giúp tách định dạng file khỏi cấu trúc lưu trữ đang dùng trong RAM.
@@ -92,7 +92,7 @@ Quy trình ghi gồm các bước: tạo file tạm có hậu tố \texttt{.tmp}
 \end{figure}
 
 \subsection{Xử lý lỗi và bảo đảm trạng thái nhất quán}
-Hàm \texttt{napDuLieu} đọc và kiểm tra dữ liệu vào các vector tạm trước khi xóa nội dung kho hiện tại. Nếu \texttt{docFile} thất bại, kho và danh sách hóa đơn đang sử dụng không bị thay đổi. Đây là nguyên tắc quan trọng: chỉ thay thế trạng thái hoạt động sau khi dữ liệu đọc đã vượt qua các bước kiểm tra định dạng. Những lỗi được kiểm tra trong bộ test hiện tại gồm file không tồn tại, file bị cắt cụt, magic sai và dữ liệu mặt hàng không hợp lệ. Khi mở rộng hệ thống, nên bổ sung kiểm tra ngày tháng, mã hóa đơn trùng, tổng tiền và tham chiếu chi tiết hóa đơn đến mã mặt hàng.
+Hàm \texttt{napDuLieu} đọc và kiểm tra dữ liệu vào các vector tạm trước khi thay thế nội dung kho hiện tại. Nếu \texttt{docFile} thất bại, kho và danh sách hóa đơn đang sử dụng không bị thay đổi. Bộ kiểm tra hiện tại xác minh header (magic, version), kích thước bản ghi và tổng kích thước file; đồng thời kiểm tra trường mặt hàng, mã hàng trùng, ngày lập, số dòng chi tiết, số lượng, đơn giá, tổng tiền và mã hóa đơn trùng. Việc đối chiếu mã hàng trong từng chi tiết hóa đơn với danh mục kho chưa được mô tả như một ràng buộc kiểm tra độc lập trong bộ test hiện tại.
 
 \subsection{Mẫu mã kiểm tra header và độ dài file}
 \begin{lstlisting}[language=C++,caption={Minh họa các điều kiện kiểm tra cấu trúc file}]
@@ -122,25 +122,32 @@ Nếu người dùng nhập ký tự thay vì số, luồng \texttt{std::cin} ch
 Khối \texttt{main()} được đặt trong \texttt{try/catch} để chuyển các ngoại lệ chưa xử lý thành thông báo có kiểm soát. Cây AVL có destructor giải phóng các nút khi đối tượng rời khỏi phạm vi. Việc thu hồi bộ nhớ theo RAII giảm nguy cơ rò rỉ khi kết thúc chương trình bình thường; tuy nhiên, khẳng định không có rò rỉ trong mọi đường chạy cần được kiểm tra riêng bằng công cụ chuyên dụng như AddressSanitizer hoặc Valgrind trên môi trường phù hợp. Báo cáo không xem sự tồn tại của destructor là bằng chứng thay thế cho kiểm thử bộ nhớ.
 
 \subsection{Kiểm thử FileIO và các giới hạn}
-Bộ kiểm thử FileIO hiện thực các ca: ghi rồi đọc lại dữ liệu; xử lý file rỗng hợp lệ; từ chối file không tồn tại; từ chối file bị cắt; từ chối magic sai; từ chối bản ghi mặt hàng có giá trị vô lý. Phần kiểm thử tích hợp kho còn xác nhận có thể lưu danh sách mặt hàng và hóa đơn rồi nạp lại vào một cây AVL khác.
+Bộ kiểm thử FileIO hiện thực 13 kiểm tra: ghi/đọc lại; file hợp lệ với hai danh sách rỗng; file không tồn tại; file bị cắt; magic sai; dữ liệu mặt hàng vô lý; file 3 byte; file 0 byte; giữ nguyên kho và hóa đơn đang hoạt động khi nạp file lỗi; version không hỗ trợ; mã mặt hàng trùng; chi tiết hóa đơn không hợp lệ; và dọn file tạm sau khi ghi thành công. Phần kiểm thử tích hợp kho còn xác nhận khả năng lưu danh sách mặt hàng và hóa đơn rồi nạp lại vào một cây AVL khác.
 
 Định dạng hiện tại ghi trực tiếp biểu diễn nhị phân của struct, vì vậy kích thước và cách bố trí struct phụ thuộc compiler, ABI và cách căn chỉnh bộ nhớ. Header chứa kích thước struct giúp phát hiện một số trường hợp không tương thích nhưng không tạo ra định dạng di động tuyệt đối giữa mọi nền tảng. Một phiên bản nâng cấp nên ghi từng trường theo thứ tự và quy ước byte cụ thể, có checksum, giới hạn số bản ghi, và cơ chế chuyển đổi schema khi đổi phiên bản.
 
 \begin{table}[H]
 \centering
-\caption{Các ca kiểm thử FileIO đã chạy}
+\caption{13 kiểm tra FileIO được ghi nhận trong lần chạy test}
 \label{tab:test_fileio}
-\small
-\begin{tabular}{@{}p{1cm}p{4cm}p{6cm}p{2.5cm}@{}}
+\scriptsize
+\begin{tabular}{@{}p{0.8cm}p{4.3cm}p{6.7cm}p{1.2cm}@{}}
 \toprule
-\textbf{Mã} & \textbf{Tình huống} & \textbf{Kết quả mong đợi} & \textbf{Kết quả chạy} \\
+\textbf{Mã} & \textbf{Tình huống} & \textbf{Kết quả mong đợi} & \textbf{Kết quả} \\
 \midrule
 F01 & Ghi và đọc lại & Dữ liệu mặt hàng/hóa đơn giữ nguyên. & Đạt \\
-F02 & File rỗng & Đọc thành công với hai danh sách rỗng. & Đạt \\
-F03 & File không tồn tại & Trả lỗi, không làm thay đổi kho. & Đạt \\
+F02 & File hợp lệ với danh sách rỗng & Đọc thành công với hai danh sách rỗng. & Đạt \\
+F03 & File không tồn tại & Trả lỗi đọc file. & Đạt \\
 F04 & File bị cắt & Từ chối do kích thước không khớp. & Đạt \\
 F05 & Magic sai & Từ chối do định dạng không khớp. & Đạt \\
-F06 & Dữ liệu âm/vô lý & Từ chối bản ghi. & Đạt \\
+F06 & Dữ liệu mặt hàng vô lý & Từ chối bản ghi mặt hàng. & Đạt \\
+F07 & File 3 byte & Từ chối vì không đủ header. & Đạt \\
+F08 & File 0 byte & Từ chối vì không đủ header. & Đạt \\
+F09 & Nạp file lỗi khi kho đang có dữ liệu & Giữ nguyên kho và danh sách hóa đơn hiện tại. & Đạt \\
+F10 & Version không hỗ trợ & Từ chối phiên bản file. & Đạt \\
+F11 & Mã mặt hàng trùng & Từ chối file có khóa trùng. & Đạt \\
+F12 & Chi tiết hóa đơn không hợp lệ & Từ chối hóa đơn có dòng chi tiết sai. & Đạt \\
+F13 & Ghi thành công & Không để lại file tạm \texttt{.tmp}. & Đạt \\
 \bottomrule
 \end{tabular}
 \end{table}
