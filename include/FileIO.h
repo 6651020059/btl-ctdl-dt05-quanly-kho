@@ -6,11 +6,20 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <cstddef>
+#include <climits>
+#include <limits>
 #include <cstring>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 #include "mathang.h"
 #include "hoadon.h"
 
@@ -27,6 +36,70 @@ struct FileHeader {
 
 const char     MAGIC[4] = {'S', 'M', 'K', '1'};
 const uint32_t VERSION  = 1;
+
+
+inline bool hopLeMatHang(const MatHang& m) {
+    return m.maHang[0] != '\0' && m.tenHang[0] != '\0' &&
+           m.donGia >= 0 && m.soLuongTon >= 0 && m.tonToiThieu >= 0 &&
+           ngayHopLe(m.ngayNhap, 1, 9999);
+}
+
+inline bool hopLeHoaDon(const HoaDon& d, std::string& loiChiTiet) {
+    if (d.maHoaDon[0] == '\0' || !ngayHopLe(d.ngayLap, 1, 9999) ||
+        d.soLuongChiTiet < 1 || d.soLuongChiTiet > MAX_CHI_TIET || d.tongTien < 0) {
+        loiChiTiet = "thong tin chung hoac so chi tiet khong hop le";
+        return false;
+    }
+    long long tong = 0;
+    for (int k = 0; k < d.soLuongChiTiet; ++k) {
+        const ChiTietHoaDon& ct = d.danhSachChiTiet[k];
+        if (ct.maHang[0] == '\0' || ct.soLuongMua <= 0 || ct.donGia < 0 ||
+            (ct.donGia > 0 && ct.soLuongMua > LLONG_MAX / ct.donGia)) {
+            loiChiTiet = "dong chi tiet " + std::to_string(k + 1) + " khong hop le";
+            return false;
+        }
+        const long long thanhTien = static_cast<long long>(ct.soLuongMua) * ct.donGia;
+        if (thanhTien > LLONG_MAX - tong) {
+            loiChiTiet = "tong tien dong chi tiet bi tran";
+            return false;
+        }
+        tong += thanhTien;
+    }
+    if (tong != d.tongTien) {
+        loiChiTiet = "tong tien khong khop cac dong chi tiet";
+        return false;
+    }
+    return true;
+}
+
+// Serialize theo layout ABI hiện tại nhưng khởi tạo byte đệm về 0 trước khi chép trường.
+inline void maHoaMatHang(const MatHang& src, unsigned char* dst) {
+    std::memset(dst, 0, sizeof(MatHang));
+#define COPY_MH_FIELD(field) std::memcpy(dst + offsetof(MatHang, field), &src.field, sizeof(src.field))
+    COPY_MH_FIELD(maHang); COPY_MH_FIELD(tenHang); COPY_MH_FIELD(donGia);
+    COPY_MH_FIELD(soLuongTon); COPY_MH_FIELD(tonToiThieu);
+    std::memcpy(dst + offsetof(MatHang, ngayNhap) + offsetof(Ngay, ngay), &src.ngayNhap.ngay, sizeof(src.ngayNhap.ngay));
+    std::memcpy(dst + offsetof(MatHang, ngayNhap) + offsetof(Ngay, thang), &src.ngayNhap.thang, sizeof(src.ngayNhap.thang));
+    std::memcpy(dst + offsetof(MatHang, ngayNhap) + offsetof(Ngay, nam), &src.ngayNhap.nam, sizeof(src.ngayNhap.nam));
+#undef COPY_MH_FIELD
+}
+
+inline void maHoaHoaDon(const HoaDon& src, unsigned char* dst) {
+    std::memset(dst, 0, sizeof(HoaDon));
+    std::memcpy(dst + offsetof(HoaDon, maHoaDon), src.maHoaDon, sizeof(src.maHoaDon));
+    std::memcpy(dst + offsetof(HoaDon, ngayLap) + offsetof(Ngay, ngay), &src.ngayLap.ngay, sizeof(src.ngayLap.ngay));
+    std::memcpy(dst + offsetof(HoaDon, ngayLap) + offsetof(Ngay, thang), &src.ngayLap.thang, sizeof(src.ngayLap.thang));
+    std::memcpy(dst + offsetof(HoaDon, ngayLap) + offsetof(Ngay, nam), &src.ngayLap.nam, sizeof(src.ngayLap.nam));
+    std::memcpy(dst + offsetof(HoaDon, soLuongChiTiet), &src.soLuongChiTiet, sizeof(src.soLuongChiTiet));
+    std::memcpy(dst + offsetof(HoaDon, tongTien), &src.tongTien, sizeof(src.tongTien));
+    for (int k = 0; k < src.soLuongChiTiet && k < MAX_CHI_TIET; ++k) {
+        const size_t base = offsetof(HoaDon, danhSachChiTiet) + static_cast<size_t>(k) * sizeof(ChiTietHoaDon);
+        const ChiTietHoaDon& ct = src.danhSachChiTiet[k];
+        std::memcpy(dst + base + offsetof(ChiTietHoaDon, maHang), ct.maHang, sizeof(ct.maHang));
+        std::memcpy(dst + base + offsetof(ChiTietHoaDon, soLuongMua), &ct.soLuongMua, sizeof(ct.soLuongMua));
+        std::memcpy(dst + base + offsetof(ChiTietHoaDon, donGia), &ct.donGia, sizeof(ct.donGia));
+    }
+}
 
 struct FileCloser { void operator()(FILE* f) const { if (f) std::fclose(f); } };
 typedef std::unique_ptr<FILE, FileCloser> FilePtr;
@@ -53,19 +126,50 @@ inline bool ghiFile(const std::string& path,
         h.soHoaDon    = (uint32_t)dsHD.size();
 
         ok = std::fwrite(&h, sizeof h, 1, f.get()) == 1;
-        if (ok && !dsMH.empty())
-            ok = std::fwrite(dsMH.data(), sizeof(MatHang), dsMH.size(), f.get()) == dsMH.size();
-        if (ok && !dsHD.empty())
-            ok = std::fwrite(dsHD.data(), sizeof(HoaDon), dsHD.size(), f.get()) == dsHD.size();
+        std::set<std::string> maHangDaCo;
+        for (size_t i = 0; ok && i < dsMH.size(); ++i) {
+            if (!hopLeMatHang(dsMH[i]) || !maHangDaCo.insert(std::string(dsMH[i].maHang)).second) {
+                loi = "Du lieu mat hang khong hop le hoac trung ma: " + std::string(dsMH[i].maHang);
+                ok = false;
+                break;
+            }
+            std::vector<unsigned char> record(sizeof(MatHang), 0);
+            maHoaMatHang(dsMH[i], record.data());
+            ok = std::fwrite(record.data(), 1, record.size(), f.get()) == record.size();
+        }
+        std::set<std::string> maHoaDonDaCo;
+        for (size_t i = 0; ok && i < dsHD.size(); ++i) {
+            std::string loiHD;
+            if (!hopLeHoaDon(dsHD[i], loiHD) ||
+                !maHoaDonDaCo.insert(std::string(dsHD[i].maHoaDon)).second) {
+                loi = "Du lieu hoa don khong hop le hoac trung ma: " + std::string(dsHD[i].maHoaDon) + " (" + loiHD + ")";
+                ok = false;
+                break;
+            }
+            std::vector<unsigned char> record(sizeof(HoaDon), 0);
+            maHoaHoaDon(dsHD[i], record.data());
+            ok = std::fwrite(record.data(), 1, record.size(), f.get()) == record.size();
+        }
         if (std::fflush(f.get()) != 0) ok = false;
     }
-    if (!ok) { std::remove(tmp.c_str()); loi = "Loi khi ghi du lieu (day o dia?)"; return false; }
+    if (!ok) { std::remove(tmp.c_str()); if (loi.empty()) loi = "Loi khi ghi du lieu (day o dia?)"; return false; }
 
-    std::remove(path.c_str());
+#ifdef _WIN32
+    // Windows rename() khong ghi de tep dich da ton tai; MoveFileEx thay the tep.
+    if (!MoveFileExA(tmp.c_str(), path.c_str(),
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+        std::remove(tmp.c_str());
+        loi = "Khong thay the duoc file dich (MoveFileExA that bai)";
+        return false;
+    }
+#else
+    // POSIX rename tren cung filesystem thay the tep dich theo cach nguyen tu.
     if (std::rename(tmp.c_str(), path.c_str()) != 0) {
+        std::remove(tmp.c_str());
         loi = "Khong doi ten duoc file tam sang " + path;
         return false;
     }
+#endif
     return true;
 }
 
@@ -111,34 +215,37 @@ inline bool docFile(const std::string& path,
         dsMH.clear(); dsHD.clear(); loi = "File hong: thieu du lieu hoa don"; return false;
     }
 
-    // Kiem tra noi dung hop le
+    // Kiem tra noi dung tung ban ghi, bao gom ngay va cac dong chi tiet hoa don.
+    std::set<std::string> maHangDaCo;
     for (size_t i = 0; i < dsMH.size(); ++i) {
         MatHang& m = dsMH[i];
-        m.maHang[sizeof m.maHang - 1]   = '\0';
+        m.maHang[sizeof m.maHang - 1] = '\0';
         m.tenHang[sizeof m.tenHang - 1] = '\0';
-        if (m.maHang[0] == '\0' || m.soLuongTon < 0 || m.donGia < 0 || m.tonToiThieu < 0) {
+        if (!hopLeMatHang(m) || !maHangDaCo.insert(std::string(m.maHang)).second) {
             dsMH.clear(); dsHD.clear();
-            loi = "File hong: mat hang thu " + std::to_string(i + 1) + " co du lieu khong hop le";
+            loi = "File hong: mat hang thu " + std::to_string(i + 1) + " co du lieu khong hop le hoac trung ma";
             return false;
         }
     }
+    std::set<std::string> maHoaDonDaCo;
     for (size_t i = 0; i < dsHD.size(); ++i) {
         HoaDon& d = dsHD[i];
         d.maHoaDon[sizeof d.maHoaDon - 1] = '\0';
-        if (d.soLuongChiTiet < 0 || d.soLuongChiTiet > MAX_CHI_TIET) {
+        for (int k = 0; k < MAX_CHI_TIET; ++k)
+            d.danhSachChiTiet[k].maHang[sizeof d.danhSachChiTiet[k].maHang - 1] = '\0';
+        std::string loiHD;
+        if (!hopLeHoaDon(d, loiHD) || !maHoaDonDaCo.insert(std::string(d.maHoaDon)).second) {
             dsMH.clear(); dsHD.clear();
-            loi = "File hong: hoa don thu " + std::to_string(i + 1) + " co so chi tiet vo ly";
+            loi = "File hong: hoa don thu " + std::to_string(i + 1) + " khong hop le: " + loiHD;
             return false;
         }
-        for (int k = 0; k < d.soLuongChiTiet; ++k)
-            d.danhSachChiTiet[k].maHang[sizeof d.danhSachChiTiet[k].maHang - 1] = '\0';
     }
     return true;
 }
 
 // ---------- Cau noi voi cay (KhoHang = AVLTree<std::string, MatHang>) ----------
 // Chi can cay co: inorder() tra ve vector<MatHang>, clear(), insert(key, value).
-// Nen chay duoc voi AVLTree_Stub.h bay gio va AVLTree.h that sau nay, khong phai sua.
+// Chay voi AVLTree.h that (AVLTree_Stub.h cu da bo khoi repo).
 
 // Luu toan bo kho + danh sach hoa don ra file.
 template <typename Kho>
