@@ -13,6 +13,8 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <type_traits>
+#include <utility>
 
 // Chỉ trong file test: mở private để kiểm tra cấu trúc nội bộ của cây.
 #define private public
@@ -65,6 +67,28 @@ typedef AVLTree<int, int> Cay;
 struct CayMau : Cay {
     CayMau(std::initializer_list<int> ks) { for (int k : ks) insert(k, k); }
 };
+
+// ============================================================ NHÓM D: CONST CORRECTNESS & MOVE
+static void testMoveVaConstSearch() {
+    batDau("Move va const");
+    static_assert(std::is_same<decltype(std::declval<const Cay&>().search(1)), const int*>::value,
+                  "search tren cay const phai tra ve const V*");
+
+    Cay nguon;
+    nguon.insert(10, 100);
+    nguon.insert(20, 200);
+    Cay dich(std::move(nguon));
+    kiemTra(nguon.empty() && nguon.size() == 0 && dich.size() == 2 &&
+            dich.search(10) && *dich.search(10) == 100,
+            "move constructor chuyen node, cay nguon rong va du lieu dich con nguyen");
+
+    Cay gan;
+    gan.insert(99, 999);
+    gan = std::move(dich);
+    kiemTra(dich.empty() && gan.size() == 2 && gan.search(20) && *gan.search(20) == 200 &&
+            !gan.search(99),
+            "move assignment giai phong du lieu cu va chuyen quyen so huu");
+}
 
 // ============================================================ NHÓM 1: PHÉP QUAY
 static void testQuay() {
@@ -229,6 +253,7 @@ int main(int argc, char** argv) {
     const char* tenFile = argc > 1 ? argv[1] : "ket_qua_test.txt";
     testQuay();
     testXoa();
+    testMoveVaConstSearch();
     testRange();
 
     int tongDat = 0, tongTruot = 0;
