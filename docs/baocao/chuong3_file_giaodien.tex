@@ -1,17 +1,153 @@
 \section{Thiết kế và Cài đặt Module Lưu trữ File Nhị phân và Giao diện Console}
 
-\subsection{Đặc tả cấu trúc File nhị phân (\texttt{FileIO.h})}
-Dữ liệu kho hàng và danh sách hóa đơn được lưu trữ bền vững trên đĩa dưới định dạng nhị phân có độ dài bản ghi cố định theo bố cục tuần tự:
+\subsection{Mục tiêu và ranh giới lưu trữ}
+Module FileIO cung cấp lớp biên giữa dữ liệu đang nằm trong RAM và dữ liệu bền vững trên đĩa. Module không phụ thuộc trực tiếp vào chi tiết nút của cây AVL; hàm lưu lấy danh sách đã duyệt theo thứ tự thông qua \texttt{inorder()}, còn hàm nạp nhận lại các mặt hàng rồi gọi \texttt{clear()} và \texttt{insert()} trên cấu trúc kho. Cách thiết kế này giúp tách định dạng file khỏi cấu trúc lưu trữ đang dùng trong RAM.
+
+\subsection{Đặc tả bố cục file}
+Dữ liệu kho hàng và danh sách hóa đơn được lưu theo thứ tự tuần tự:
 \[
-  [\texttt{FileHeader}] \;\Vert\; [\texttt{MatHang} \times \text{soMatHang}] \;\Vert\; [\texttt{HoaDon} \times \text{soHoaDon}]
+  [\texttt{FileHeader}]\;\Vert\;[\texttt{MatHang}\times soMatHang]\;\Vert\;[\texttt{HoaDon}\times soHoaDon].
 \]
-Cấu trúc \texttt{FileHeader} gồm 24 byte lưu trữ mã định danh \texttt{magic = "SMK1"}, phiên bản định dạng (\texttt{version = 1}), kích thước bản ghi \texttt{sizeof(MatHang)}, \texttt{sizeof(HoaDon)} và số lượng bản ghi tương ứng.
+Header gồm 24 byte theo định nghĩa hiện tại: 4 byte mã nhận diện \texttt{SMK1}, sau đó là các trường số nguyên 32-bit gồm phiên bản, kích thước bản ghi mặt hàng, kích thước bản ghi hóa đơn, số mặt hàng và số hóa đơn. Kích thước bản ghi được ghi trong header để phát hiện file được tạo bởi bản build có cấu trúc dữ liệu không tương thích.
 
-\subsection{Cơ chế Ghi file an toàn (Atomic Write) và Kiểm lỗi Đọc file}
-\begin{itemize}
-    \item \textbf{Ghi file an toàn (Task T45):} Hàm \texttt{FileIO::ghiFile} ghi toàn bộ dữ liệu ra tệp tạm \texttt{kho.dat.tmp}. Chỉ khi thao tác \texttt{fwrite} và \texttt{fflush} thành công trọn vẹn, chương trình mới đổi tên tệp tạm thành \texttt{kho.dat}, giúp bảo toàn dữ liệu cũ nếu xảy ra sự cố mất điện hoặc đầy ổ đĩa giữa chừng.
-    \item \textbf{Đọc file và kiểm tra toàn vẹn (Task T46):} Hàm \texttt{FileIO::docFile} và \texttt{FileIO::napDuLieu} kiểm tra mã \texttt{magic}, \texttt{version}, kích thước tệp khớp chính xác từng byte, ép ký tự kết thúc chuỗi \texttt{'\textbackslash 0'} và từ chối bản ghi có giá trị âm hoặc trùng mã hàng.
-\end{itemize}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm, every node/.style={font=\small}]
+  \draw[fill=blue!10] (0,0) rectangle (3.1,1.0);
+  \draw[fill=green!10] (3.1,0) rectangle (8.5,1.0);
+  \draw[fill=orange!12] (8.5,0) rectangle (13.5,1.0);
+  \node at (1.55,0.66) {FileHeader};
+  \node at (1.55,0.30) {24 byte};
+  \node at (5.8,0.66) {MatHang};
+  \node at (5.8,0.30) {$soMatHang$ bản ghi};
+  \node at (11,0.66) {HoaDon};
+  \node at (11,0.30) {$soHoaDon$ bản ghi};
+  \node at (1.55,-0.35) {Magic / Version / Size / Count};
+\end{tikzpicture}
+\caption{Bố cục tuần tự của file kho.dat}
+\label{fig:file_layout}
+\end{figure}
 
-\subsection{Giao diện Menu Console và Xử lý ngoại lệ (Task T47, T48)}
-Hệ thống Menu Console trong \texttt{main.cpp} kiểm tra trạng thái luồng \texttt{std::cin}, tự động làm sạch bộ đệm bằng \texttt{cin.clear()} và \texttt{cin.ignore()} khi nhập sai kiểu dữ liệu. Toàn bộ hàm \texttt{main()} được bọc trong khối \texttt{try/catch} kết hợp hàm hủy \texttt{\textasciitilde AVLTree()} giải phóng đệ quy toàn bộ các nút trên cây, đảm bảo không rò rỉ bộ nhớ.
+\begin{table}[H]
+\centering
+\caption{Các trường trong FileHeader}
+\label{tab:file_header}
+\small
+\begin{tabular}{@{}p{3cm}p{2.5cm}p{6.5cm}@{}}
+\toprule
+\textbf{Trường} & \textbf{Kiểu} & \textbf{Mục đích} \\
+\midrule
+\texttt{magic[4]} & 4 byte & Nhận diện định dạng file là SMK1. \\
+\texttt{version} & uint32\_t & Phiên bản schema, hiện tại bằng 1. \\
+\texttt{kichThuocMH} & uint32\_t & Kích thước bản ghi MatHang của bản build. \\
+\texttt{kichThuocHD} & uint32\_t & Kích thước bản ghi HoaDon của bản build. \\
+\texttt{soMatHang} & uint32\_t & Số bản ghi mặt hàng tiếp theo header. \\
+\texttt{soHoaDon} & uint32\_t & Số bản ghi hóa đơn sau vùng mặt hàng. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ghi dữ liệu và thay thế file}
+Quy trình ghi gồm các bước: tạo file tạm có hậu tố \texttt{.tmp}; ghi header; ghi lần lượt các mặt hàng; ghi các hóa đơn; gọi \texttt{fflush}; đóng file; sau đó thay thế file đích bằng file tạm. Nếu lỗi xảy ra trong lúc ghi, file tạm được xóa và hàm trả về thông báo lỗi. Trên hệ điều hành POSIX, thao tác \texttt{rename} có thể thay thế đích trên cùng hệ thống file; trên Windows, mã nguồn dùng API thay thế file tương ứng. Cơ chế này giảm nguy cơ để lại file đích chỉ được ghi một nửa, nhưng không thay thế cho sao lưu định kỳ hoặc kiểm tra lỗi thiết bị lưu trữ.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Latex,node distance=0.7cm,every node/.style={font=\small}]
+  \node[draw,rounded corners,fill=blue!8,minimum width=3.3cm] (start) {Bắt đầu lưu};
+  \node[draw,rounded corners,fill=gray!10,below=of start,minimum width=3.3cm] (tmp) {Mở kho.dat.tmp};
+  \node[draw,rounded corners,fill=gray!10,below=of tmp,minimum width=3.3cm] (write) {Ghi header + bản ghi};
+  \node[draw,diamond,aspect=2,fill=yellow!15,below=of write,minimum width=3.4cm] (ok) {Ghi và flush thành công?};
+  \node[draw,rounded corners,fill=red!10,below left=0.8cm and 0.3cm of ok,minimum width=2.7cm] (fail) {Xóa file tạm, báo lỗi};
+  \node[draw,rounded corners,fill=green!10,below right=0.8cm and 0.3cm of ok,minimum width=2.7cm] (rename) {Thay thế file đích};
+  \node[draw,rounded corners,fill=blue!8,below=0.7cm of rename,minimum width=2.7cm] (done) {Hoàn tất};
+  \draw[->] (start) -- (tmp);
+  \draw[->] (tmp) -- (write);
+  \draw[->] (write) -- (ok);
+  \draw[->] (ok) -- node[above left]{Không} (fail);
+  \draw[->] (ok) -- node[above right]{Có} (rename);
+  \draw[->] (rename) -- (done);
+\end{tikzpicture}
+\caption{Quy trình ghi file qua file tạm}
+\label{fig:atomic_write}
+\end{figure}
+
+\subsection{Kiểm tra khi đọc file}
+Đọc file không chỉ là gọi \texttt{fread} theo số lượng được khai báo. Module xác minh lần lượt: file tồn tại; file đủ dài để chứa header; magic khớp; phiên bản được hỗ trợ; kích thước bản ghi tương thích; kích thước thực tế của file bằng tổng kích thước header và các vùng bản ghi được mô tả. Sau khi đọc, các chuỗi được ép kết thúc bằng ký tự null và dữ liệu mặt hàng được kiểm tra các thuộc tính không âm. Khi nạp vào cây, mã hàng trùng bị từ chối.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Latex,node distance=0.55cm,every node/.style={font=\small}]
+  \node[draw,rounded corners,fill=blue!8,minimum width=3.4cm] (open) {Mở file và đọc header};
+  \node[draw,rounded corners,fill=gray!10,below=of open,minimum width=3.4cm] (magic) {Kiểm tra magic / version / size};
+  \node[draw,rounded corners,fill=gray!10,below=of magic,minimum width=3.4cm] (length) {Đối chiếu kích thước file};
+  \node[draw,rounded corners,fill=gray!10,below=of length,minimum width=3.4cm] (records) {Đọc bản ghi và kiểm tra dữ liệu};
+  \node[draw,rounded corners,fill=green!10,below=of records,minimum width=3.4cm] (load) {Nạp vào AVL và danh sách hóa đơn};
+  \draw[->] (open) -- (magic);
+  \draw[->] (magic) -- node[right]{Hợp lệ} (length);
+  \draw[->] (length) -- node[right]{Khớp} (records);
+  \draw[->] (records) -- node[right]{Hợp lệ} (load);
+\end{tikzpicture}
+\caption{Các bước kiểm tra tính hợp lệ khi nạp file}
+\label{fig:read_validation}
+\end{figure}
+
+\subsection{Xử lý lỗi và bảo đảm trạng thái nhất quán}
+Hàm \texttt{napDuLieu} đọc và kiểm tra dữ liệu vào các vector tạm trước khi xóa nội dung kho hiện tại. Nếu \texttt{docFile} thất bại, kho và danh sách hóa đơn đang sử dụng không bị thay đổi. Đây là nguyên tắc quan trọng: chỉ thay thế trạng thái hoạt động sau khi dữ liệu đọc đã vượt qua các bước kiểm tra định dạng. Những lỗi được kiểm tra trong bộ test hiện tại gồm file không tồn tại, file bị cắt cụt, magic sai và dữ liệu mặt hàng không hợp lệ. Khi mở rộng hệ thống, nên bổ sung kiểm tra ngày tháng, mã hóa đơn trùng, tổng tiền và tham chiếu chi tiết hóa đơn đến mã mặt hàng.
+
+\subsection{Mẫu mã kiểm tra header và độ dài file}
+\begin{lstlisting}[language=C++,caption={Minh họa các điều kiện kiểm tra cấu trúc file}]
+if (std::memcmp(h.magic, MAGIC, 4) != 0) {
+    loi = "Sai dinh dang (magic khong khop)";
+    return false;
+}
+if (h.version != VERSION) {
+    loi = "Phien ban file khong ho tro";
+    return false;
+}
+uint64_t expected = sizeof(FileHeader)
+    + uint64_t(h.soMatHang) * sizeof(MatHang)
+    + uint64_t(h.soHoaDon) * sizeof(HoaDon);
+if (expected != uint64_t(size)) {
+    loi = "File hong: kich thuoc khong khop";
+    return false;
+}
+\end{lstlisting}
+
+\subsection{Giao diện Menu Console}
+Giao diện console được chia thành menu chính và các menu con: quản lý kho; hóa đơn/doanh thu; lưu trữ; chạy benchmark; xem nhanh cảnh báo. Menu chính hiển thị số lượng mặt hàng, chiều cao cây và số hóa đơn hiện có để người dùng có phản hồi về trạng thái chương trình. Mỗi menu con nhận lựa chọn từ hàm đọc số nguyên có kiểm tra miền giá trị.
+
+Nếu người dùng nhập ký tự thay vì số, luồng \texttt{std::cin} chuyển sang trạng thái lỗi. Chương trình gọi \texttt{cin.clear()} để khôi phục trạng thái và \texttt{cin.ignore()} để bỏ phần còn lại của dòng. Nếu không xử lý hai bước này, các lần đọc sau có thể tiếp tục thất bại trên cùng dữ liệu lỗi, tạo cảm giác chương trình bị treo.
+
+\subsection{Xử lý ngoại lệ và vòng đời bộ nhớ}
+Khối \texttt{main()} được đặt trong \texttt{try/catch} để chuyển các ngoại lệ chưa xử lý thành thông báo có kiểm soát. Cây AVL có destructor giải phóng các nút khi đối tượng rời khỏi phạm vi. Việc thu hồi bộ nhớ theo RAII giảm nguy cơ rò rỉ khi kết thúc chương trình bình thường; tuy nhiên, khẳng định không có rò rỉ trong mọi đường chạy cần được kiểm tra riêng bằng công cụ chuyên dụng như AddressSanitizer hoặc Valgrind trên môi trường phù hợp. Báo cáo không xem sự tồn tại của destructor là bằng chứng thay thế cho kiểm thử bộ nhớ.
+
+\subsection{Kiểm thử FileIO và các giới hạn}
+Bộ kiểm thử FileIO hiện thực các ca: ghi rồi đọc lại dữ liệu; xử lý file rỗng hợp lệ; từ chối file không tồn tại; từ chối file bị cắt; từ chối magic sai; từ chối bản ghi mặt hàng có giá trị vô lý. Phần kiểm thử tích hợp kho còn xác nhận có thể lưu danh sách mặt hàng và hóa đơn rồi nạp lại vào một cây AVL khác.
+
+Định dạng hiện tại ghi trực tiếp biểu diễn nhị phân của struct, vì vậy kích thước và cách bố trí struct phụ thuộc compiler, ABI và cách căn chỉnh bộ nhớ. Header chứa kích thước struct giúp phát hiện một số trường hợp không tương thích nhưng không tạo ra định dạng di động tuyệt đối giữa mọi nền tảng. Một phiên bản nâng cấp nên ghi từng trường theo thứ tự và quy ước byte cụ thể, có checksum, giới hạn số bản ghi, và cơ chế chuyển đổi schema khi đổi phiên bản.
+
+\begin{table}[H]
+\centering
+\caption{Các ca kiểm thử FileIO đã chạy}
+\label{tab:test_fileio}
+\small
+\begin{tabular}{@{}p{1cm}p{4cm}p{6cm}p{2.5cm}@{}}
+\toprule
+\textbf{Mã} & \textbf{Tình huống} & \textbf{Kết quả mong đợi} & \textbf{Kết quả chạy} \\
+\midrule
+F01 & Ghi và đọc lại & Dữ liệu mặt hàng/hóa đơn giữ nguyên. & Đạt \\
+F02 & File rỗng & Đọc thành công với hai danh sách rỗng. & Đạt \\
+F03 & File không tồn tại & Trả lỗi, không làm thay đổi kho. & Đạt \\
+F04 & File bị cắt & Từ chối do kích thước không khớp. & Đạt \\
+F05 & Magic sai & Từ chối do định dạng không khớp. & Đạt \\
+F06 & Dữ liệu âm/vô lý & Từ chối bản ghi. & Đạt \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Hướng dẫn thao tác demo}
+Để minh họa module, người trình bày chạy \texttt{./main\_app}, kiểm tra thông báo nạp CSV ban đầu, mở menu lưu trữ và thực hiện lưu dữ liệu. Sau đó có thể thoát và chạy lại chương trình để quan sát cơ chế phục hồi từ file. Một ca kiểm thử lỗi nên chạy độc lập trong bộ test FileIO thay vì cố làm hỏng file dữ liệu đang dùng cho demo. Khi trình bày, cần phân biệt rõ dữ liệu mẫu CSV dùng khởi tạo lần đầu với file nhị phân dùng lưu trạng thái sau giao dịch. Khi khởi động, \texttt{main} phân biệt ba tình huống: (1) \texttt{kho.dat} đọc được thì khôi phục dữ liệu; (2) \texttt{kho.dat} chưa tồn tại thì nạp dữ liệu mẫu CSV; (3) \texttt{kho.dat} tồn tại nhưng không đọc được thì báo lỗi kèm lý do và \textbf{không tự ghi đè}. Ở tình huống (3), người dùng chọn thoát để giữ nguyên file, hoặc chọn sao lưu file lỗi thành \texttt{kho.dat.hongN} (không bao giờ ghi đè bản sao lưu cũ) rồi mới dùng dữ liệu mẫu; nếu sao lưu thất bại thì chương trình dừng. Hàm kiểm tra sự tồn tại chỉ coi là "chưa có file" khi hệ điều hành báo \texttt{ENOENT}; mọi lỗi khác (không có quyền đọc, đường dẫn là thư mục) đều đi vào nhánh báo lỗi. Kịch bản này được kiểm thử tự động bằng \texttt{tests/test\_khoi\_dong.sh} trong thư mục tạm, không đụng tới \texttt{kho.dat} thật.
+
+
+\subsection{Đầu ra kiểm thử và cách đọc thông báo}
+Trong bản ghi kiểm thử, thông báo bắt đầu bằng \texttt{[OK]} biểu thị ca kiểm thử đã đạt. Một số dòng có tiền tố \texttt{[Lỗi]} được tạo có chủ đích để xác nhận chương trình từ chối dữ liệu không hợp lệ; đó không phải lỗi làm hỏng tiến trình test. Khi báo cáo kết quả, cần phân biệt lỗi nghiệp vụ được kiểm tra với lỗi assertion thực sự.
