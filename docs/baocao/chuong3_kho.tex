@@ -1,34 +1,140 @@
 \section{Thiết kế và Cài đặt Module Quản lý Kho hàng}
 
+\subsection{Vai trò và ranh giới module}
+Module quản lý kho chịu trách nhiệm thao tác trên danh mục mặt hàng và các nghiệp vụ làm thay đổi số lượng tồn. Module không tự cài đặt cây tìm kiếm; thay vào đó, module dùng bí danh \texttt{KhoHang = AVLTree<std::string, MatHang>} và gọi các thao tác công khai của cây. Cách tách này giúp phần nghiệp vụ không phụ thuộc vào cách cài đặt nút, phép quay hoặc quản lý bộ nhớ ở bên trong AVLTree.
+
 \subsection{Cấu trúc dữ liệu Mặt hàng (\texttt{struct MatHang})}
-Cấu trúc \texttt{MatHang} (định nghĩa trong \texttt{include/mathang.h}) sử dụng các mảng ký tự kích thước cố định để tương thích trực tiếp với thao tác đọc/ghi bản ghi file nhị phân:
-\begin{verbatim}
+Cấu trúc \texttt{MatHang} (định nghĩa trong \texttt{include/mathang.h}) lưu các thuộc tính cần thiết cho tra cứu và tính tồn kho. Các mảng ký tự có kích thước cố định giúp bản ghi dễ ghi/đọc theo khối trong bản cài đặt FileIO hiện tại. Khi gán chuỗi đầu vào, chương trình phải giới hạn độ dài để bảo đảm chuỗi luôn có ký tự kết thúc.
+\begin{lstlisting}[language=C++,caption={Cấu trúc dữ liệu mặt hàng (rút gọn theo định nghĩa dự án)}]
 struct MatHang {
-    char maHang[16];      // Khoa chinh tren cay AVL (toi da 15 ky tu)
-    char tenHang[64];     // Ten mat hang (toi da 63 ky tu)
-    long long donGia;     // Don gia ban (VND)
-    int soLuongTon;       // So luong ton kho hien tai
-    int tonToiThieu;      // Nguong canh bao ton kho toi thieu
-    Ngay ngayNhap;        // Ngay nhap kho gan nhat (ngay, thang, nam)
+    char maHang[16];       // Khoa chinh, toi da 15 ky tu
+    char tenHang[64];      // Ten, toi da 63 ky tu
+    long long donGia;      // Don gia (VND)
+    int soLuongTon;        // So luong hien tai
+    int tonToiThieu;       // Nguong canh bao
+    Ngay ngayNhap;         // Ngay nhap gan nhat
 };
-\end{verbatim}
+\end{lstlisting}
 
-\subsection{Cài đặt các thao tác CRUD và Tra cứu khoảng giá}
-Module kho sử dụng kiểu bí danh \texttt{typedef AVLTree<std::string, MatHang> KhoHang;}. Mọi thao tác thêm (\texttt{themMatHang}), sửa (\texttt{suaMatHang}), xóa (\texttt{xoaMatHang}) và tìm kiếm (\texttt{timMatHang}) đều ủy quyền trực tiếp cho các phương thức \texttt{insert}, \texttt{search} và \texttt{remove} của cây AVL với độ phức tạp $O(\log n)$. Riêng thao tác tra cứu theo khoảng giá (\texttt{timTheoKhoangGia}) thực hiện duyệt cây theo thứ tự trung thứ tự (\texttt{inorder}) rồi lọc các mặt hàng thỏa mãn $\text{giaTu} \le \text{donGia} \le \text{giaDen}$ với độ phức tạp $O(n)$.
+\begin{table}[H]
+\centering
+\caption{Ý nghĩa các trường của MatHang}
+\label{tab:mathang_fields}
+\small
+\begin{tabular}{@{}p{3cm}p{3cm}p{6.7cm}@{}}
+\toprule
+\textbf{Trường} & \textbf{Kiểu} & \textbf{Ý nghĩa và ràng buộc} \\
+\midrule
+\texttt{maHang} & \texttt{char[16]} & Khóa duy nhất, không rỗng, tối đa 15 ký tự. \\
+\texttt{tenHang} & \texttt{char[64]} & Tên hiển thị, tối đa 63 ký tự. \\
+\texttt{donGia} & \texttt{long long} & Đơn giá tính bằng đồng, không âm. \\
+\texttt{soLuongTon} & \texttt{int} & Lượng hàng trong kho, không âm. \\
+\texttt{tonToiThieu} & \texttt{int} & Ngưỡng phát cảnh báo, không âm. \\
+\texttt{ngayNhap} & \texttt{Ngay} & Ngày nhập gần nhất theo cấu trúc ngày/tháng/năm. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Thuật toán Nhập kho, Xuất kho và Chặn xuất quá tồn}
-Hàm \texttt{xuatKho} kiểm tra nghiêm ngặt ràng buộc số lượng tồn trước khi trừ kho và tự động phát cảnh báo nếu chạm ngưỡng tối thiểu:
-\begin{verbatim}
-bool xuatKho(KhoHang& kho, const string& maHang, int soLuongXuat) {
+\subsection{Sơ đồ luồng dữ liệu trong module kho}
+Hình~\ref{fig:luong_kho} thể hiện đường đi từ yêu cầu người dùng đến cấu trúc dữ liệu. Các thao tác theo mã đi qua AVLTree; thao tác cảnh báo duyệt danh sách theo thứ tự; thao tác nhập dữ liệu mẫu đọc CSV rồi lần lượt chèn các mặt hàng vào cây.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Latex, node distance=0.65cm, every node/.style={font=\small}]
+  \node[draw,rounded corners,fill=blue!8,minimum width=3cm,minimum height=0.8cm] (input) {Yêu cầu từ Menu};
+  \node[draw,rounded corners,fill=green!8,below=of input,minimum width=3cm,minimum height=0.8cm] (validate) {Kiểm tra dữ liệu đầu vào};
+  \node[draw,rounded corners,fill=orange!12,below=of validate,minimum width=3cm,minimum height=0.8cm] (avl) {AVLTree - KhoHang};
+  \node[draw,rounded corners,fill=gray!12,below left=0.8cm and 0.6cm of avl,minimum width=2.8cm,minimum height=0.8cm] (crud) {CRUD / Range};
+  \node[draw,rounded corners,fill=gray!12,below right=0.8cm and 0.6cm of avl,minimum width=2.8cm,minimum height=0.8cm] (stock) {Nhập / Xuất / Cảnh báo};
+  \draw[->] (input) -- (validate);
+  \draw[->] (validate) -- (avl);
+  \draw[->] (avl) -- (crud);
+  \draw[->] (avl) -- (stock);
+\end{tikzpicture}
+\caption{Luồng xử lý tổng quát của module quản lý kho}
+\label{fig:luong_kho}
+\end{figure}
+
+\subsection{Cài đặt các thao tác CRUD}
+Các thao tác thêm, sửa, xóa và tìm kiếm sử dụng mã mặt hàng làm khóa. Hàm thêm cần từ chối mã trùng trước khi chèn. Hàm sửa tìm con trỏ đến giá trị rồi cập nhật các trường được phép; khóa không thay đổi nên không làm phá vỡ thứ tự của cây. Hàm xóa ủy quyền cho \texttt{remove}, nơi cây thực hiện xử lý nút có 0, 1 hoặc 2 con và cân bằng lại đường đi từ nút bị xóa lên gốc.
+
+Ví dụ đoạn mã rút gọn cho thao tác thêm và tìm:
+\begin{lstlisting}[language=C++,caption={Minh họa thao tác thêm và tìm theo mã}]
+bool themMatHang(KhoHang& kho, const MatHang& mh) {
+    if (mh.maHang[0] == '\0' || mh.soLuongTon < 0 ||
+        mh.donGia < 0 || mh.tonToiThieu < 0) {
+        return false;
+    }
+    return kho.insert(std::string(mh.maHang), mh);
+}
+
+MatHang* timMatHang(KhoHang& kho, const std::string& ma) {
+    return kho.search(ma);
+}
+\end{lstlisting}
+Đoạn mã trên tập trung vào điều kiện nghiệp vụ và cách ủy quyền. Việc cân bằng, cấp phát nút và xử lý liên kết con thuộc trách nhiệm của AVLTree, không lặp lại trong module kho.
+
+\subsection{Tra cứu theo khoảng mã và khoảng giá}
+Tra cứu theo khoảng mã tận dụng thứ tự khóa của cây. Thuật toán so sánh khóa hiện tại với hai biên để bỏ qua những nhánh chắc chắn không thể chứa kết quả. Nếu có $k$ phần tử nằm trong khoảng truy vấn, chi phí kỳ vọng theo cấu trúc AVL là $O(\log n+k)$. Danh sách kết quả được xuất theo thứ tự tăng dần của mã.
+
+Tra cứu theo khoảng giá có đặc điểm khác: cây được tổ chức theo mã hàng, không theo đơn giá. Vì vậy, module duyệt danh sách mặt hàng theo thứ tự trung thứ tự, kiểm tra điều kiện $giaTu \le donGia \le giaDen$ cho từng phần tử. Độ phức tạp là $O(n)$; không thể tuyên bố $O(\log n)$ nếu chưa xây dựng thêm chỉ mục theo giá. Khi cần tăng tốc truy vấn giá, có thể bổ sung một cây AVL thứ hai với khóa là cặp (đơn giá, mã hàng), nhưng khi đó mọi thao tác cập nhật mặt hàng phải đồng bộ cả hai chỉ mục.
+
+\subsection{Nhập kho và xuất kho có kiểm soát}
+Với nhập kho, điều kiện hợp lệ gồm mã hàng tồn tại, số lượng nhập lớn hơn 0 và ngày nhập hợp lệ. Trước khi cộng số lượng nhập vào tồn kho, chương trình kiểm tra tồn hiện tại không âm và tổng mới không vượt giới hạn của kiểu \texttt{int}. Cụ thể, thay vì thực hiện phép cộng rồi mới kiểm tra kết quả, chương trình so sánh \texttt{soLuongNhap} với \texttt{numeric\_limits<int>::max() - soLuongTon}. Nếu lượng nhập lớn hơn phần dung lượng còn lại, thao tác bị từ chối và số lượng tồn được giữ nguyên. Cách kiểm tra trước phép cộng tránh tràn số nguyên có dấu, vốn có thể tạo ra giá trị sai và làm sai lệch dữ liệu kho. Với xuất kho, chương trình kiểm tra lượng xuất dương và không vượt tồn trước khi trừ. Trình tự kiểm tra quan trọng vì nếu cập nhật trước rồi mới phát hiện điều kiện sai, dữ liệu có thể bị thay đổi một phần. Ngày nhập được kiểm tra theo lịch thực tế bằng hàm dùng chung \texttt{ngayHopLe()} trong \texttt{ngay.h}: tháng 4, 6, 9, 11 chỉ có 30 ngày, tháng 2 có 28 hoặc 29 ngày tùy năm nhuận (chia hết cho 400, hoặc chia hết cho 4 mà không chia hết cho 100). Vì vậy 31/02/2026, 31/04/2026 và 29/02/2027 bị từ chối, còn 29/02/2028 được chấp nhận. Các hàm \texttt{themMatHang}, \texttt{suaMatHang} và \texttt{nhapKho} đều kiểm tra ngày trước khi thay đổi bất kỳ trường nào, nên một thao tác bị từ chối không để lại dữ liệu sửa dở dang.
+\begin{lstlisting}[language=C++,caption={Đoạn kiểm tra xuất kho, trích theo logic module}]
+bool xuatKho(KhoHang& kho, const string& maHang,
+             int soLuongXuat) {
     if (soLuongXuat <= 0) return false;
     MatHang* mh = kho.search(maHang);
-    if (mh == nullptr || soLuongXuat > mh->soLuongTon) {
-        return false; // Chan xuat kho khi vuot qua so luong ton
-    }
+    if (mh == nullptr || soLuongXuat > mh->soLuongTon)
+        return false;
     mh->soLuongTon -= soLuongXuat;
     return true;
 }
-\end{verbatim}
+\end{lstlisting}
+Sau khi xuất thành công, nếu số lượng còn lại nhỏ hơn hoặc bằng ngưỡng tồn tối thiểu, giao diện phát thông báo để nhân viên biết cần xem xét nhập bổ sung. Thông báo không tự động tạo đơn mua hàng, bởi quyết định đặt hàng thuộc quy trình quản lý và chưa nằm trong phạm vi đề tài.
 
 \subsection{Cảnh báo tồn kho tối thiểu}
-Hàm \texttt{layDanhSachCanhBaoTonKho} duyệt danh sách tăng dần từ \texttt{kho.inorder()}, trích xuất toàn bộ các mặt hàng có \texttt{soLuongTon <= tonToiThieu} và tính toán lượng hàng gợi ý cần nhập bổ sung theo công thức $\text{goiYNhap} = 2 \times \text{tonToiThieu} - \text{soLuongTon}$.
+Hàm \texttt{layDanhSachCanhBaoTonKho} duyệt danh sách lấy từ \texttt{kho.inorder()}, sau đó lấy các mặt hàng thỏa điều kiện $soLuongTon \le tonToiThieu$. Lượng nhập gợi ý trong phiên bản hiện tại được tính theo công thức:
+\[
+  goiYNhap = \max(0, 2\times tonToiThieu - soLuongTon).
+\]
+Công thức này đặt mục tiêu sau khi nhập, lượng hàng đạt xấp xỉ hai lần ngưỡng tối thiểu. Đây chỉ là quy tắc gợi ý phục vụ minh họa; hệ thống thực tế cần xét tốc độ bán, thời gian giao hàng, lượng đặt tối thiểu và tính mùa vụ.
+
+\subsection{Nạp dữ liệu CSV}
+Dữ liệu mẫu được lưu tại \texttt{data/du\_lieu\_mau.csv}. Luồng nạp đọc từng dòng, tách các trường theo dấu phẩy, tạo đối tượng mặt hàng rồi chèn vào cây. Dữ liệu mẫu được dùng cho kiểm thử và demo, không phải dữ liệu giao dịch của một siêu thị thật. Trong kho mã nguồn đã loại bỏ bản sao \texttt{mau\_mathang.csv}; chương trình dùng một tên file chuẩn để tránh hai bản dữ liệu trôi lệch nhau.
+
+\subsection{Bộ kiểm thử nghiệp vụ kho}
+Các ca kiểm thử tích hợp trong \texttt{tests/test\_kho.cpp} kiểm tra các nhóm: nạp 50 mặt hàng; thêm mới và từ chối mã trùng; sửa thông tin; xóa và xác nhận không còn tìm thấy; nhập kho; từ chối xuất vượt tồn; xuất hợp lệ; cảnh báo tồn tối thiểu; range search theo mã/giá; lưu và nạp kho cùng hóa đơn qua FileIO. Việc kiểm thử trên AVLTree thật giúp xác nhận module kho không chỉ chạy với một cấu trúc giả lập.
+
+\begin{table}[H]
+\centering
+\caption{Ma trận kiểm thử module kho}
+\label{tab:test_kho}
+\small
+\begin{tabular}{@{}p{1.1cm}p{4cm}p{6.2cm}p{2.5cm}@{}}
+\toprule
+\textbf{Mã} & \textbf{Ca kiểm thử} & \textbf{Kết quả mong đợi} & \textbf{Bằng chứng} \\
+\midrule
+K01 & Nạp CSV & Nạp đủ 50 mã; cây có 50 nút. & Log test kho. \\
+K02 & Thêm mã mới & Trả về thành công và tăng kích thước cây. & Assertion T28. \\
+K03 & Thêm mã trùng & Trả về thất bại, không tăng kích thước. & Assertion T28. \\
+K04 & Sửa thông tin & Tên/giá/ngưỡng được cập nhật. & Assertion T28. \\
+K05 & Xóa mặt hàng & Mã bị xóa không còn tìm thấy. & Assertion T28. \\
+K06 & Xuất vượt tồn & Từ chối và giữ nguyên số lượng tồn. & Assertion T30. \\
+K07 & Cảnh báo & Danh sách cảnh báo không rỗng với dữ liệu thử. & Assertion T31. \\
+K08 & Range search & Trả đúng 5 mã trong MH001..MH005. & Assertion T22. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Kết quả kiểm thử là bằng chứng cho các đường đi được mô tả, không thay thế cho kiểm thử giao diện người dùng ở mọi tổ hợp nhập liệu. Trước khi bảo vệ, nhóm nên trình diễn trực tiếp ít nhất một trường hợp hợp lệ và một trường hợp bị từ chối để thể hiện rõ quy tắc nghiệp vụ.
+
+
+\subsection{Kết quả chạy kiểm thử tích hợp}
+Hình~\ref{fig:console_kho_test} là ảnh chụp cửa sổ xterm trong lúc chạy \texttt{make test} trên Linux/container. Các dòng báo lỗi trùng mã hoặc xuất vượt tồn là kết quả được mong đợi của ca kiểm thử âm; phần tổng kết cuối cửa sổ được tính từ log của chính lần chạy này. Ảnh không phải ảnh chụp từ máy Windows demo.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{console_tests.png}
+\caption{Ảnh chụp xterm chạy make test trên Linux/container (không phải máy demo Windows)}
+\label{fig:console_kho_test}
+\end{figure}

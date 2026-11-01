@@ -1,19 +1,123 @@
 \chapter{Khảo sát nghiệp vụ và Phân tích bài toán}
 
-\section{Khảo sát thực tế nghiệp vụ quản lý kho và doanh thu siêu thị}
-Trong hoạt động vận hành của siêu thị bán lẻ, số lượng danh mục hàng hóa rất lớn và biến động liên tục theo từng giao dịch mua bán. Qua khảo sát nghiệp vụ thực tế, bài toán đặt ra gồm các luồng công việc chính:
-\begin{itemize}
-    \item \textbf{Quản lý danh mục mặt hàng:} Mỗi mặt hàng được định danh duy nhất bởi mã mặt hàng (\texttt{maHang} cố định tối đa 15 ký tự), tên mặt hàng (\texttt{tenHang} tối đa 63 ký tự), đơn giá bán (\texttt{donGia} kiểu \texttt{long long} tính bằng đồng), số lượng tồn kho hiện tại (\texttt{soLuongTon}), ngưỡng tồn kho tối thiểu (\texttt{tonToiThieu}) và ngày nhập kho (\texttt{ngayNhap} gồm ngày, tháng, năm).
-    \item \textbf{Nghiệp vụ nhập kho và xuất kho:} Khi nhập thêm lô hàng mới, hệ thống cộng dồn số lượng tồn và cập nhật ngày nhập mới nhất. Khi xuất kho hoặc lập hóa đơn bán hàng, hệ thống bắt buộc kiểm tra điều kiện số lượng xuất không vượt quá số lượng tồn hiện tại để chặn tình trạng xuất âm kho.
-    \item \textbf{Cảnh báo tồn kho tối thiểu:} Sau mỗi đợt xuất hàng hoặc khi kiểm kê định kỳ, hệ thống tự động lọc ra danh sách các mặt hàng có \texttt{soLuongTon <= tonToiThieu} để cảnh báo nhập hàng bổ sung kịp thời.
-    \item \textbf{Quản lý hóa đơn và thống kê doanh thu:} Mỗi hóa đơn (\texttt{HoaDon}) chứa tối đa 20 dòng chi tiết mặt hàng (\texttt{ChiTietHoaDon}), tự động trừ tồn kho khi bán và tổng hợp doanh thu theo ngày, tháng cũng như xếp hạng các mặt hàng bán chạy.
-\end{itemize}
+\section{Bối cảnh và động cơ lựa chọn đề tài}
+Trong hoạt động của một siêu thị, dữ liệu hàng hóa thay đổi liên tục do các hoạt động nhập hàng, bán hàng, điều chỉnh tồn, kiểm kê và cập nhật giá. Một danh mục vài chục nghìn mã hàng có thể phát sinh nhiều yêu cầu tra cứu mỗi ngày. Người vận hành cần tìm đúng mặt hàng theo mã, kiểm tra lượng tồn trước khi bán, nhận biết sản phẩm sắp hết và tổng hợp doanh thu theo các mốc thời gian.
 
-\section{Phân tích yêu cầu chức năng của hệ thống}
-Hệ thống được chia thành 4 phân hệ chức năng gắn kết chặt chẽ:
+Nếu lưu danh mục trong một mảng tuyến tính, phép tìm kiếm theo mã phải lần lượt so sánh các phần tử cho đến khi gặp kết quả hoặc duyệt hết danh sách. Khi số lượng phần tử tăng, thời gian tra cứu tăng theo quy mô dữ liệu. Cây tìm kiếm nhị phân thông thường có thể đạt hiệu năng tốt khi cây cân đối, nhưng thứ tự chèn bất lợi có thể làm chiều cao cây tăng gần bằng số nút. Vì vậy, đề tài lựa chọn cây AVL - một cây tìm kiếm nhị phân tự cân bằng - để lưu trữ danh mục hàng hóa. Trọng tâm của bài tập lớn không chỉ là cài đặt cấu trúc dữ liệu mà còn là tích hợp cấu trúc đó vào các nghiệp vụ kho, hóa đơn, doanh thu và lưu trữ.
+
+\section{Phạm vi hệ thống và các tác nhân}
+Phạm vi triển khai là chương trình C++ chạy trên giao diện dòng lệnh (console), sử dụng cây AVL trong bộ nhớ chính và file nhị phân để lưu trạng thái giữa các lần chạy. Hệ thống chưa kết nối cơ sở dữ liệu tập trung, chưa có tài khoản người dùng, phân quyền hoặc giao diện web. Đây là các giới hạn được xác định trước để tập trung vào mục tiêu học phần là thiết kế và đánh giá cấu trúc dữ liệu.
+
+Các tác nhân chính gồm:
+\begin{itemize}
+  \item \textbf{Nhân viên kho:} xem danh sách, thêm/sửa/xóa mặt hàng, tra cứu theo mã hoặc khoảng giá, nhập kho, xuất kho và theo dõi cảnh báo tồn tối thiểu.
+  \item \textbf{Nhân viên bán hàng:} lập hóa đơn, chọn mặt hàng, nhập số lượng mua, kiểm tra tồn và xác nhận giao dịch.
+  \item \textbf{Người quản lý:} xem danh sách hóa đơn, tổng hợp doanh thu theo ngày/tháng và xem nhóm sản phẩm bán chạy.
+  \item \textbf{Người vận hành hệ thống:} lưu, khôi phục dữ liệu; kiểm tra lỗi file; chạy bộ kiểm thử và benchmark.
+\end{itemize}
+Một người có thể đảm nhiệm nhiều vai trò trong bản demo. Việc tách tác nhân ở đây nhằm làm rõ mục đích sử dụng và quyền thao tác về mặt nghiệp vụ, không hàm ý hệ thống đã có cơ chế xác thực người dùng.
+
+\section{Khảo sát quy trình nghiệp vụ}
+\subsection{Quản lý danh mục và vòng đời mặt hàng}
+Mỗi mặt hàng được nhận diện bằng mã duy nhất. Khi thêm mới, hệ thống cần kiểm tra mã chưa tồn tại, độ dài mã và tên không vượt quá kích thước mảng ký tự cố định, đơn giá và số lượng không âm. Khi sửa, mã được dùng để tìm bản ghi hiện có; chương trình cập nhật những thuộc tính được phép thay đổi mà không tạo thêm khóa trùng. Khi xóa, nút tương ứng được loại khỏi cây và các nút tổ tiên được cân bằng lại.
+
+\subsection{Nhập kho và xuất kho}
+Nhập kho làm tăng số lượng tồn. Số lượng nhập phải là số nguyên dương; mã hàng phải tồn tại. Xuất kho cần kiểm tra cả mã hàng lẫn lượng tồn. Nếu số lượng yêu cầu lớn hơn số lượng đang có, thao tác bị từ chối và không được thay đổi dữ liệu. Sau khi xuất thành công, chương trình so sánh lượng tồn mới với ngưỡng tối thiểu để hiển thị cảnh báo.
+
+\subsection{Bán hàng và thống kê}
+Một hóa đơn gồm mã hóa đơn, ngày lập, danh sách chi tiết và tổng tiền. Mỗi dòng chi tiết chứa mã mặt hàng, số lượng mua và đơn giá tại thời điểm lập hóa đơn. Hệ thống kiểm tra số lượng mua, số dòng chi tiết và khả năng đáp ứng từ kho. Tổng tiền được cộng dồn theo kiểu số nguyên 64-bit để giảm nguy cơ tràn số khi nhân đơn giá với số lượng lớn. Sau giao dịch, số lượng tồn được cập nhật và hóa đơn được đưa vào danh sách để thống kê.
+
+\subsection{Lưu và phục hồi}
+Khi thoát hoặc khi người dùng chủ động chọn chức năng lưu, chương trình ghi trạng thái kho và danh sách hóa đơn ra file nhị phân. Ở lần khởi động tiếp theo, hệ thống thử đọc file đã lưu; nếu không có file hợp lệ thì có thể nạp dữ liệu mẫu CSV để phục vụ thực hành. Nếu file lưu bị hỏng, chương trình phải thông báo lỗi và không nạp một phần dữ liệu lỗi vào cấu trúc đang hoạt động.
+
+\section{Yêu cầu chức năng}
+Bảng~\ref{tab:yeucau_chucnang} tổng hợp các nhóm yêu cầu chức năng và tiêu chí kiểm chứng tương ứng.
+\begin{table}[H]
+\centering
+\caption{Yêu cầu chức năng và cách kiểm chứng}
+\label{tab:yeucau_chucnang}
+\small
+\begin{tabular}{@{}p{0.8cm}p{3.1cm}p{6.2cm}p{3.1cm}@{}}
+\toprule
+\textbf{Mã} & \textbf{Nhóm} & \textbf{Yêu cầu} & \textbf{Cách kiểm chứng} \\
+\midrule
+FR01 & Danh mục & Thêm, sửa, xóa và tìm theo mã; không cho phép mã trùng. & Bộ test AVL và test kho. \\
+FR02 & Tra cứu & Tìm theo khoảng mã và lọc theo khoảng giá. & Đối chiếu tập kết quả mẫu. \\
+FR03 & Kho & Nhập/xuất số lượng; chặn xuất quá tồn. & Test nhập-xuất và tồn sau giao dịch. \\
+FR04 & Cảnh báo & Liệt kê hàng có tồn không vượt ngưỡng tối thiểu. & Test danh sách cảnh báo. \\
+FR05 & Hóa đơn & Lập hóa đơn, tính tổng tiền và trừ tồn tự động. & Kiểm tra chi tiết và tồn kho sau bán. \\
+FR06 & Doanh thu & Tổng hợp theo ngày/tháng và xếp hạng Top N. & So sánh với phép tính tay trên dữ liệu nhỏ. \\
+FR07 & Lưu trữ & Ghi/đọc kho và hóa đơn; từ chối file sai định dạng. & Bộ test FileIO. \\
+FR08 & Giao diện & Có menu, kiểm tra lựa chọn và xử lý nhập liệu sai. & Chạy thử các nhánh menu. \\
+FR09 & Đánh giá & So sánh AVL với tìm tuyến tính trên các quy mô dữ liệu. & Chạy benchmark có seed cố định. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Yêu cầu phi chức năng và ràng buộc thiết kế}
+\begin{itemize}
+  \item \textbf{Hiệu năng:} tìm kiếm chính xác theo khóa trên cây AVL có độ phức tạp $O(\log n)$ trong trường hợp xấu nhất; range search theo khóa có độ phức tạp $O(\log n+k)$ với $k$ là số kết quả.
+  \item \textbf{Tính đúng đắn:} sau thao tác chèn/xóa, thứ tự khóa phải được duy trì và hệ số cân bằng của mọi nút thuộc $\{-1,0,1\}$.
+  \item \textbf{Tính toàn vẹn:} số lượng, đơn giá và ngưỡng tồn không âm; khóa không rỗng và không trùng; file phải có kích thước khớp header.
+  \item \textbf{Khả năng bảo trì:} mã được chia thành header và source theo module; các giao diện hàm được thống nhất trước khi tích hợp.
+  \item \textbf{Tính tái lập thực nghiệm:} seed sinh truy vấn được cố định; phương pháp đo và môi trường biên dịch được ghi trong báo cáo.
+\end{itemize}
+Các ràng buộc kỹ thuật quan trọng là C++11~\cite{stroustrup}, khóa cây là \texttt{std::string}, giá trị là \texttt{MatHang}, mỗi mã/tên mặt hàng được giới hạn theo mảng ký tự cố định và mỗi hóa đơn giới hạn tối đa 20 dòng chi tiết.
+
+\section{Mô hình phân rã chức năng}
+Hình~\ref{fig:phanhe_tongquan} mô tả cách các phân hệ trao đổi dữ liệu. Cây AVL là cấu trúc trung tâm của danh mục kho; phân hệ hóa đơn tham chiếu đến mã mặt hàng trong cây để xác nhận tồn và cập nhật lượng hàng. Module FileIO nhận dữ liệu đã duyệt từ cây và danh sách hóa đơn để ghi ra file, hoặc kiểm tra dữ liệu đọc được trước khi nạp vào bộ nhớ.
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.7cm and 0.8cm, >=Latex, every node/.style={font=\small}]
+  \node[draw, rounded corners, fill=blue!8, minimum width=3.1cm, minimum height=0.9cm] (ui) {Menu Console};
+  \node[draw, rounded corners, fill=green!10, below left=of ui, minimum width=3.1cm, minimum height=1cm] (stock) {Quản lý kho};
+  \node[draw, rounded corners, fill=green!10, below right=of ui, minimum width=3.1cm, minimum height=1cm] (sales) {Hóa đơn / Doanh thu};
+  \node[draw, rounded corners, fill=orange!12, below=1.4cm of ui, minimum width=3.1cm, minimum height=1cm] (avl) {AVLTree<key, MatHang>};
+  \node[draw, rounded corners, fill=gray!12, below=1cm of avl, minimum width=3.1cm, minimum height=0.9cm] (file) {FileIO - kho.dat / CSV};
+  \draw[->] (ui) -- (stock);
+  \draw[->] (ui) -- (sales);
+  \draw[<->] (stock) -- (avl);
+  \draw[<->] (sales) -- (avl);
+  \draw[<->] (avl) -- (file);
+\end{tikzpicture}
+\caption{Mô hình phân rã chức năng và luồng dữ liệu giữa các phân hệ}
+\label{fig:phanhe_tongquan}
+\end{figure}
+
+\section{Luồng xử lý một giao dịch bán hàng}
+Một giao dịch bán hàng cần giữ các bước kiểm tra theo đúng thứ tự để tránh trừ tồn khi dữ liệu chưa hợp lệ. Quy trình khái quát:
 \begin{enumerate}
-    \item \textbf{Phân hệ Cấu trúc dữ liệu lõi (AVL Tree):} Cài đặt cây nhị phân tìm kiếm tự cân bằng \texttt{AVLTree<K, V>} với khóa \texttt{K} là mã hàng (\texttt{std::string}) và giá trị \texttt{V} là cấu trúc \texttt{MatHang}, hỗ trợ các phép quay cân bằng (LL, RR, LR, RL), thêm, xóa, tìm kiếm chính xác trong thời gian $O(\log n)$ và tìm kiếm theo khoảng mã hàng (\texttt{rangeSearch}) trong thời gian $O(\log n + k)$.
-    \item \textbf{Phân hệ Quản lý kho hàng:} Cung cấp đầy đủ 4 thao tác CRUD (Thêm, Sửa, Xóa, Tìm kiếm), tra cứu mặt hàng theo khoảng giá $O(n)$, nạp bộ dữ liệu mẫu $\ge 50$ mặt hàng từ file CSV, xử lý nhập/xuất kho an toàn và xuất bảng cảnh báo tồn kho tối thiểu.
-    \item \textbf{Phân hệ Hóa đơn và Doanh thu:} Lập hóa đơn bán hàng trực tiếp trên cây kho hàng, trừ tồn tự động, thống kê doanh thu theo ngày/tháng và đánh giá hiệu năng thực nghiệm trên các tập dữ liệu 1.000, 10.000 và 100.000 mặt hàng.
-    \item \textbf{Phân hệ Lưu trữ File nhị phân và Giao diện Console:} Đọc/ghi toàn bộ dữ liệu mặt hàng và hóa đơn ra file nhị phân có cấu trúc Header kiểm tra phiên bản và điều phối qua hệ thống Menu Console có kiểm soát lỗi nhập liệu.
+  \item Người dùng chọn chức năng lập hóa đơn và nhập mã mặt hàng.
+  \item Hệ thống tìm mã trong cây AVL. Nếu không tìm thấy, dòng hàng không được thêm vào hóa đơn.
+  \item Người dùng nhập số lượng mua. Chương trình từ chối số lượng không dương hoặc vượt quá lượng tồn.
+  \item Hệ thống lấy đơn giá, tính thành tiền, kiểm tra giới hạn số dòng và cập nhật chi tiết hóa đơn.
+  \item Khi xác nhận hóa đơn, lượng tồn được trừ và tổng tiền được lưu vào bản ghi hóa đơn.
+  \item Người dùng có thể lưu dữ liệu xuống file nhị phân để phục hồi trong phiên làm việc sau.
 \end{enumerate}
+
+\section{Các trường hợp biên cần kiểm soát}
+Bảng~\ref{tab:edge_cases} liệt kê các tình huống dễ gây lỗi nếu chỉ kiểm tra luồng sử dụng thông thường.
+\begin{table}[H]
+\centering
+\caption{Các trường hợp biên trong nghiệp vụ}
+\label{tab:edge_cases}
+\small
+\begin{tabular}{@{}p{3.5cm}p{5.7cm}p{4cm}@{}}
+\toprule
+\textbf{Tình huống} & \textbf{Rủi ro} & \textbf{Cách xử lý mong đợi} \\
+\midrule
+Thêm mã đã tồn tại & Ghi đè nhầm mặt hàng & Từ chối và thông báo mã trùng. \\
+Xuất số lượng âm hoặc bằng 0 & Dữ liệu tồn kho sai & Từ chối trước khi thay đổi tồn. \\
+Xuất vượt tồn & Phát sinh tồn âm & Giữ nguyên tồn và báo lỗi. \\
+Tìm mã không tồn tại & Truy cập con trỏ rỗng & Kiểm tra nullptr trước khi dùng. \\
+File bị cắt cụt & Đọc thiếu bản ghi & Đối chiếu kích thước và từ chối file. \\
+Nhập lựa chọn dạng chữ & Luồng cin ở trạng thái lỗi & clear và ignore trước khi hỏi lại. \\
+Hóa đơn quá 20 dòng & Vượt giới hạn mảng chi tiết & Từ chối thêm dòng tiếp theo. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Tiêu chí nghiệm thu tổng thể}
+Một phân hệ chỉ được xem là kiểm chứng ở mức kỹ thuật khi có mã nguồn, có cách biên dịch và có bằng chứng chạy phù hợp. Đối với cấu trúc AVL, bằng chứng là bộ test phép quay, xóa và range search. Đối với nghiệp vụ kho, bằng chứng là các ca CRUD, nhập/xuất, cảnh báo và nạp dữ liệu mẫu. Đối với FileIO, bằng chứng là các ca ghi/đọc và các ca từ chối file lỗi. Đối với benchmark, cần ghi rõ số truy vấn, số lần lặp, thống kê được sử dụng và môi trường thực thi.
+
+Các thao tác mang tính quy trình như tạo repository, mở/merge pull request, cập nhật Jira, chia sẻ tài liệu cho giảng viên, đọc chéo và tập dượt demo không thể suy ra chỉ từ việc có file trong gói nộp. Những việc này cần bằng chứng tương ứng từ nền tảng hoặc biên bản nhóm; báo cáo không gắn trạng thái hoàn thành nếu chưa có bằng chứng đó.
