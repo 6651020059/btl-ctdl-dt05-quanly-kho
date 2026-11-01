@@ -45,14 +45,17 @@ public:
     AVLTree();
     ~AVLTree();
 
-    // Cấm sao chép nông để tránh lỗi giải phóng bộ nhớ 2 lần (Task T25)
+    // Quyền sở hữu node là duy nhất: cấm sao chép nông, hỗ trợ chuyển quyền sở hữu.
     AVLTree(const AVLTree&) = delete;
     AVLTree& operator=(const AVLTree&) = delete;
+    AVLTree(AVLTree&& other) noexcept;
+    AVLTree& operator=(AVLTree&& other) noexcept;
 
     // 9 hàm chính đã thống nhất
     bool insert(const K& key, const V& value);   // không cho trùng khóa
     bool remove(const K& key);
-    V* search(const K& key) const;
+    V* search(const K& key);
+    const V* search(const K& key) const;
     void rangeSearch(const K& lo, const K& hi, std::vector<V>& result) const; // O(log n + k)
 
     std::vector<V> inorder() const;
