@@ -1,0 +1,131 @@
+g++ -Iinclude -std=c++11 -Wall -Wextra -O2  tests/T23_test_suite.cpp -o test_suite
+g++ -Iinclude -std=c++11 -Wall -Wextra -O2  tests/test_fileio.cpp -o test_fileio
+g++ -Iinclude -std=c++11 -Wall -Wextra -O2  tests/test_kho.cpp src/quan_ly_kho.cpp -o test_kho
+g++ -Iinclude -std=c++11 -Wall -Wextra -O2  tests/test_hoadon.cpp src/lap_hoa_don.cpp src/thongkedoanhthu.cpp -o test_hoadon
+./test_suite
+KET QUA BO TEST CAY AVL (T23)
+Nhom                  Dat    Truot     Tong
+Phep quay              12        0       12
+Xoa node               12        0       12
+Move va const           2        0        2
+Range Search            9        0        9
+TONG                   35        0       35
+
+BANG DO CHIEU CAO VA THOI GIAN (khoa ngau nhien)
+n        chieu cao  1.44*log2(n+2) them (ms)    xoa (ms)     100 range (ms)
+1000     12         14.4           0.08         0.11         0.030         
+10000    16         19.1           1.34         1.53         0.040         
+100000   20         23.9           33.05        25.33        0.086         
+
+TAT CA TEST DAT
+(Da ghi ket qua vao ket_qua_test.txt)
+./test_fileio
+[OK] ghi roi doc lai dung
+[OK] file rong hop le
+[OK] file thieu: File khong ton tai: tmp_khong_co.dat
+[OK] file bi cat: File hong: kich thuoc khong khop so ban ghi
+[OK] sai magic: Sai dinh dang (magic khong khop)
+[OK] du lieu vo ly: File hong: mat hang thu 1 co du lieu khong hop le hoac trung ma
+[OK] file 3 byte bi tu choi: File qua ngan, khong co header
+[OK] file 0 byte bi tu choi: File qua ngan, khong co header
+[OK] nap file hong that bai thi kho va hoa don dang co giu nguyen
+[OK] sai version bi tu choi: Phien ban file khong ho tro
+[OK] trung ma mat hang bi tu choi: File hong: mat hang thu 2 co du lieu khong hop le hoac trung ma
+[OK] hoa don co so luong chi tiet vo ly bi tu choi: File hong: hoa don thu 1 khong hop le: dong chi tiet 1 khong hop le
+[OK] ghi thanh cong khong de lai file .tmp
+./test_kho
+[OK] T29: Nap 50 mat hang mau vao AVLTree that (height = 6)
+[Lỗi] Mã mặt hàng 'MH051' đã tồn tại trong kho!
+[OK] T28: 4 thao tac CRUD (Them, Sua, Xoa, Tim) tren AVLTree that
+[Lỗi] Không thể xuất kho! Số lượng yêu cầu xuất (999) vượt quá số lượng tồn hiện tại (70)!
+--> [CẢNH BÁO]: Mặt hàng MH001 (Sua tuoi Vinamilk 100% 1L) đã xuống mức tồn kho tối thiểu (còn 5 <= 10)!
+[OK] T30: Nhap kho, Xuat kho va Chan xuat qua ton
+[Lỗi] Không thể nhập kho! Tổng số lượng tồn sẽ vượt giới hạn kiểu int (2147483647).
+[OK] T30: Chan tran so khi nhap kho (INT_MAX boundary)
+[Lỗi] Không thể nhập kho! Tổng số lượng tồn sẽ vượt giới hạn kiểu int (2147483647).
+[Lỗi] Không thể nhập kho! Tổng số lượng tồn sẽ vượt giới hạn kiểu int (2147483647).
+[OK] T30: Bien tran so voi nhap lon (INT_MAX) va ton nho
+[Lỗi] Ngày nhập không hợp lệ theo lịch (vd: 31/02 không tồn tại)!
+[Lỗi] Ngày nhập mới không hợp lệ theo lịch; không sửa mặt hàng!
+[Lỗi] Ngày nhập kho không hợp lệ theo lịch; không nhập kho!
+[OK] Ngay thang theo lich thuc te: 31/02, 31/04, 29/02 (nam nhuan / khong nhuan)
+[OK] T31 & T22: Canh bao ton kho (12 SP) & Range Search khoang ma / khoang gia
+[OK] T45 & T46: Luu kho AVLTree that -> nap vao kho moi dung
+./test_hoadon
+== A. Hàm kiểm tra tồn và trừ tồn ==
+[OK]   A1: mua đúng bằng tồn (10/10) được chấp nhận
+[OK]   A2: mua vượt tồn (11/10) bị từ chối
+[OK]   A3: mua 1 đơn vị được chấp nhận
+[OK]   A4: trừ 4 còn 6, chưa chạm mức tối thiểu nên không cảnh báo
+[OK]   A5: còn 3 (<= mức tối thiểu 3) thì có cảnh báo tồn tối thiểu
+[OK]   A6: trừ về 0 thì có cảnh báo HẾT HÀNG
+== B. Lập hóa đơn ==
+[OK]   B1: lập thành công 1 hóa đơn
+[OK]   B1: mã hóa đơn là HD001
+[OK]   B1: ngày lập 22/10/2026
+[OK]   B1: có 2 dòng chi tiết
+[OK]   B1: tổng tiền = 3*25.000 + 2*12.000 = 99.000
+[OK]   B1: dòng 1 ghi đúng mã, số lượng, đơn giá
+[OK]   B1: tồn kho được trừ tự động (MH001: 100->97, MH002: 50->48)
+[OK]   B2: mua 10 khi tồn 5 -> không tạo hóa đơn
+[OK]   B2: tồn MH003 giữ nguyên 5
+[OK]   B2: có thông báo kho không đủ hàng
+[OK]   B3: mã hàng không tồn tại -> không tạo hóa đơn
+[OK]   B3: có thông báo mã hàng không tồn tại
+[OK]   B4: mặt hàng tồn 0 -> không tạo hóa đơn
+[OK]   B4: có cảnh báo mặt hàng đã hết hàng
+[OK]   B5b: 31/02/2026, 29/02/2027, 31/04/2026 bị từ chối
+[OK]   B5b: 29/02/2028 (năm nhuận) được chấp nhận
+[OK]   B5: ngày 32/13/2026 bị từ chối
+[OK]   B5: sau khi nhập lại, hóa đơn ghi đúng ngày 23/10/2026
+[OK]   B6: số lượng 0, âm, chữ đều bị từ chối
+[OK]   B6: cuối cùng ghi nhận số lượng 5, tổng tiền 125.000
+[OK]   B6: tồn MH001 còn 95
+[OK]   B7: mã hóa đơn dài hơn 15 ký tự bị từ chối
+[OK]   B7: nhập lại mã hợp lệ HD007 thì lập được
+[OK]   B8: 3 x 5.000.000.000 = 15.000.000.000 (không tràn số)
+[OK]   B9: kho rỗng -> báo lỗi, không tạo hóa đơn
+[OK]   B10: hóa đơn dừng đúng ở 20 dòng chi tiết
+[OK]   B10: tổng tiền 20 x 1.000 = 20.000
+[OK]   B10: có thông báo đạt giới hạn tối đa
+[OK]   B10: mặt hàng thứ 21 trở đi không bị trừ tồn
+[OK]   B11: hóa đơn thứ hai mua 3 khi chỉ còn 2 bị chặn, tồn giữ 2
+[OK]   A1: EOF khi nhập hóa đơn hủy giao dịch và giữ nguyên tồn kho
+[OK]   A1: không xác nhận thì hóa đơn bị hủy, tồn kho không đổi
+[OK]   B1: từ chối mã hóa đơn trùng và nhận mã mới
+[OK]   B6: kiểm tra tồn cộng dồn khi cùng mã hàng xuất hiện nhiều dòng
+== C. Hiển thị danh sách hóa đơn ==
+[OK]   C1: danh sách rỗng in thông báo chưa có hóa đơn
+[OK]   C2: in đúng mã, ngày (05/03/2026), tổng tiền và tổng số hóa đơn
+== D. Thống kê doanh thu ==
+[OK]   D1: ngày 22/10/2026 có 2 hóa đơn, doanh thu 350.000 (không lẫn tháng/năm khác)
+[OK]   D2: ngày không có hóa đơn cho kết quả 0
+[OK]   D3: ngày 40/1/2026 bị từ chối, nhập lại 22/10/2026 cho kết quả đúng
+[OK]   D3b: ngày 31/02/2026 và 31/04/2026 bị từ chối, nhập lại 22/10/2026 cho kết quả đúng
+[OK]   D4: tháng 10/2026 có 3 hóa đơn, doanh thu 390.000
+[OK]   D5: tháng 10/2025 chỉ tính hóa đơn của năm 2025
+[OK]   D6: tháng 13 bị từ chối, nhập lại 10/2026 cho kết quả đúng
+[OK]   D7: danh sách hóa đơn rỗng cho doanh thu 0
+[OK]   D8: cộng dồn 18 tỷ không bị tràn số
+[OK]   D9: menu thống kê chạy được cả hai chức năng, báo lỗi lựa chọn 9 và thoát bằng 0
+== E. Tích hợp: lập hóa đơn rồi thống kê ==
+[OK]   E1: doanh thu ngày 15/11/2026 = 62.000 + 48.000 = 110.000
+[OK]   E2: doanh thu tháng 11/2026 = 135.000
+[OK]   E3: tồn kho sau 3 hóa đơn: MH001 = 97, MH002 = 45
+
+TONG KET: 55 dat, 0 truot
+TAT CA TEST HOA DON DAT
+sh tests/test_khoi_dong.sh
+[OK]   1a: chua co kho.dat -> nap du lieu mau
+[OK]   1b: thoat xong da tao kho.dat
+[OK]   2a: bao file kho.dat bi hong
+[OK]   2b: thoat voi ma loi khac 0
+[OK]   2c: kho.dat van 3 byte, KHONG bi ghi de
+[OK]   2d: khong tu dong nap du lieu mau
+[OK]   3: kho.dat rong van con nguyen 0 byte
+[OK]   4a: ban hong duoc sao luu day du (kho.dat.hong1)
+[OK]   4b: sau khi sao luu moi nap 50 mat hang mau
+[OK]   5: ban sao luu cu khong bi ghi de, tao kho.dat.hong2
+[OK]   6: kho.dat hop le duoc khoi phuc (50 mat hang)
+[OK]   7: file bi cat ngan duoc giu nguyen 200 byte
+TONG KET khoi dong: 12 dat, 0 truot
