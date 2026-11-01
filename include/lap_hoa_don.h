@@ -5,9 +5,9 @@
 #include <string>
 #include "mathang.h"
 #include "hoadon.h"
-#include "AVLTree.h"
+#include "khohang.h"
 
-void lapHoaDon(AVLTree<std::string, MatHang>& kho, std::vector<HoaDon>& danhSachHoaDon);
+void lapHoaDon(KhoHang& kho, std::vector<HoaDon>& danhSachHoaDon);
 bool kiemTraHetHang(const MatHang& mh, int soLuongMua);
 void truTonTuDong(MatHang& mh, int soLuongMua);
 void hienThiDanhSachHoaDon(const std::vector<HoaDon>& danhSachHoaDon);
