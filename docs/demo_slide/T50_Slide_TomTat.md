@@ -14,12 +14,16 @@
 - Nghiệp vụ nhập/xuất kho: chặn nghiêm ngặt xuất quá số lượng tồn, tự động cảnh báo mặt hàng có `soLuongTon <= tonToiThieu` và tính lượng gợi ý nhập bổ sung `2 * tonToiThieu - soLuongTon`.
 
 ## Slide 4: Phân hệ Hóa đơn, Doanh thu & Top Bán chạy (TV4)
-- Lập hóa đơn bán hàng (tối đa 20 dòng chi tiết), tra cứu mặt hàng trên cây AVL và trừ tồn tự động theo thời gian thực.
+- Lập hóa đơn bán hàng (tối đa 20 dòng chi tiết), kiểm tra tồn/tổng tiền theo giao dịch; chỉ trừ kho sau xác nhận cuối, EOF hoặc hủy xác nhận thì không ghi hóa đơn và không trừ tồn.
 - Thống kê doanh thu theo Ngày / Tháng và xếp hạng Top $N$ mặt hàng bán chạy bằng `std::map` kết hợp `std::sort`.
 
 ## Slide 5: Lưu trữ File nhị phân an toàn & Thực nghiệm Benchmark (TV4 & TV5)
 - **FileIO (`kho.dat`):** Header 24 byte (`SMK1`), cơ chế ghi file tạm `.tmp` rồi đổi tên (Atomic Write), kiểm tra kích thước từng byte.
 - **Kết quả Benchmark (1.000 truy vấn):**
-  - 1.000 mặt hàng: AVL nhanh hơn Vector **~31,7 lần** (281 µs vs 8.907 µs).
-  - 10.000 mặt hàng: AVL nhanh hơn Vector **~179,9 lần** (485 µs vs 87.260 µs).
-  - 50.000 mặt hàng: AVL nhanh hơn Vector **~585,5 lần** (788 µs vs 461.403 µs).
+  - 1.000 mặt hàng: AVL **100,089 µs**, Vector + `lower_bound` **64,496 µs** (vector nhanh hơn khoảng **1,56 lần**).
+  - 10.000 mặt hàng: AVL **192,745 µs**, Vector + `lower_bound` **122,081 µs** (vector nhanh hơn khoảng **1,58 lần**).
+  - 50.000 mặt hàng: AVL **284,702 µs**, Vector + `lower_bound` **187,238 µs** (vector nhanh hơn khoảng **1,52 lần**).
+  - 100.000 mặt hàng: AVL **389,176 µs**, Vector + `lower_bound` **216,581 µs** (vector nhanh hơn khoảng **1,80 lần**).
+  - Ở 100.000 mặt hàng, 100 lần chèn: AVL **23,595 µs**, vector **40.817,120 µs**; 100 lần xóa: AVL **177,273 µs**, vector **21.948,953 µs**.
+
+> Chuẩn hóa: trung vị 9 lần đo, mỗi lần 1.000 truy vấn; vector đã sắp xếp và dùng `lower_bound` (O(log n), không còn baseline duyệt tuyến tính). GCC 14.2.0 / Linux x86_64 / AMD EPYC 9V74 (3 CPU logic cấp cho container). Kết quả tương ứng `benchmark_console.txt` trong gói; thời gian thay đổi theo tải máy và môi trường.
