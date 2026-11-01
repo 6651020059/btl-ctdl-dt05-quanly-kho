@@ -39,7 +39,7 @@ Cây nhị phân tìm kiếm (BST) thông thường đáp ứng điều kiện t
 nhưng độ phức tạp của nó phụ thuộc vào hình dạng cây. Nếu các mã hàng được nhập
 theo thứ tự tăng dần, BST suy biến thành một danh sách liên kết có chiều cao
 $n$ và mỗi thao tác tốn $O(n)$. Cây AVL giữ chiều cao luôn ở mức $O(\log n)$
-bất kể thứ tự nhập, nên được chọn cho đề tài này.
+bất kể thứ tự nhập~\cite{adelson,clrs}, nên được chọn cho đề tài này.
 
 \section{Định nghĩa cây AVL và hệ số cân bằng}\label{sec:avl-dinhnghia}
 
@@ -71,7 +71,7 @@ do đó
 \[
   N(1) = 1,\quad N(2) = 2,\quad N(h) = N(h-1) + N(h-2) + 1 .
 \]
-Quy hồi này cùng dạng với dãy Fibonacci $F_1 = F_2 = 1,\ F_k = F_{k-1} + F_{k-2}$:
+Quy hồi này cùng dạng với dãy Fibonacci $F_1 = F_2 = 1,\ F_k = F_{k-1} + F_{k-2}$~\cite{knuth}:
 bằng quy nạp, $N(h) = F_{h+2} - 1$. Vì $F_{h+2} \ge \varphi^{h}$ với
 $\varphi = \frac{1+\sqrt5}{2} \approx 1{,}618$, một cây AVL có $n$ nút và chiều
 cao $h$ thỏa $n \ge \varphi^{h} - 1$, suy ra
@@ -314,10 +314,10 @@ Thao tác xóa (\texttt{remove}) tìm nút theo khóa rồi xử lý ba trườn
 \begin{enumerate}
   \item \textbf{Nút lá:} xóa nút, con trỏ của cha trở thành rỗng.
   \item \textbf{Nút có một con:} xóa nút và nối con duy nhất của nó vào cha.
-  \item \textbf{Nút có hai con:} tìm nút nhỏ nhất của cây con phải (nút kế tiếp theo
-        thứ tự khóa, hàm \texttt{getMinValueNode}), chép khóa và dữ liệu của nó vào
-        nút cần xóa, rồi xóa nút kế tiếp khỏi cây con phải. Nút kế tiếp không có
-        con trái nên rơi vào trường hợp 1 hoặc 2.
+  \item \textbf{Nút có hai con:} tìm nút nhỏ nhất ở cây con phải, tức nút kế tiếp
+        theo thứ tự khóa. Chép khóa và dữ liệu của nút này vào nút cần xóa, rồi
+        xóa nút kế tiếp khỏi cây con phải. Vì nút kế tiếp không có con trái, bước
+        xóa tiếp theo thuộc trường hợp 1 hoặc 2.
 \end{enumerate}
 Trên đường quay lại gốc, mỗi nút cập nhật \texttt{height} và tái cân bằng giống
 thao tác thêm. Có hai điểm khác so với thao tác thêm.
