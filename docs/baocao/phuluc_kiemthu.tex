@@ -1,0 +1,165 @@
+\chapter*{Phụ lục: Hướng dẫn biên dịch, kiểm thử và nghiệm thu}
+\addcontentsline{toc}{chapter}{Phụ lục: Hướng dẫn biên dịch, kiểm thử và nghiệm thu}
+
+\section*{A. Cấu trúc thư mục bàn giao}
+Dự án được chia thành các thư mục theo trách nhiệm kỹ thuật. Thư mục \texttt{include/} chứa khai báo cấu trúc và giao diện module; \texttt{src/} chứa các định nghĩa hàm và điểm vào chương trình; \texttt{tests/} chứa bộ kiểm thử; \texttt{data/} chứa dữ liệu CSV mẫu; \texttt{docs/baocao/} chứa các tệp LaTeX; \texttt{docs/demo\_slide/} chứa slide và kịch bản demo. Cấu trúc này giúp phân biệt mã chạy, mã kiểm thử và tài liệu.
+
+\begin{table}[H]
+\centering
+\caption{Các tệp nguồn chính trong dự án tích hợp}
+\small
+\begin{tabular}{@{}p{4cm}p{3cm}p{6cm}@{}}
+\toprule
+\textbf{Tệp} & \textbf{Vai trò} & \textbf{Ghi chú} \\
+\midrule
+\texttt{include/AVLTree.h}, \texttt{AVLTree.tpp} & Cấu trúc AVL & Giao diện và phần cài đặt template. \\
+\texttt{include/mathang.h} & Mô hình mặt hàng & Kiểu dữ liệu dùng chung. \\
+\texttt{src/quan\_ly\_kho.cpp} & Nghiệp vụ kho & CRUD, nhập/xuất, cảnh báo, nạp CSV. \\
+\texttt{src/lap\_hoa\_don.cpp} & Hóa đơn & Kiểm tra tồn và trừ tồn. \\
+\texttt{src/thongkedoanhthu.cpp} & Thống kê & Doanh thu ngày/tháng. \\
+\texttt{include/FileIO.h} & Lưu trữ & Ghi và đọc file nhị phân. \\
+\texttt{src/main.cpp} & Giao diện & Điều phối menu và module. \\
+\texttt{src/benchmark.cpp} & Benchmark & Chạy phép so sánh AVL/vector độc lập. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section*{B. Các lệnh biên dịch và kiểm thử}
+Các lệnh dưới đây được chạy từ thư mục gốc repository. Cần có trình biên dịch GCC hỗ trợ C++11 và công cụ \texttt{make}. Build có thể thực hiện như sau:
+\begin{lstlisting}[language=bash,caption={Biên dịch toàn bộ chương trình}]
+make clean
+make
+\end{lstlisting}
+Lệnh \texttt{make} tạo \texttt{main\_app} và \texttt{benchmark\_app}. Chương trình chính có thể chạy bằng:
+\begin{lstlisting}[language=bash,caption={Chạy menu và chương trình benchmark}]
+./main_app
+./benchmark_app
+\end{lstlisting}
+Bộ test tích hợp được biên dịch và chạy bằng:
+\begin{lstlisting}[language=bash,caption={Chạy các nhóm kiểm thử và tích hợp}]
+make test
+\end{lstlisting}
+Khi kiểm tra thủ công, nên bắt đầu ở thư mục gốc để đường dẫn tương đối tới \texttt{data/du\_lieu\_mau.csv} được phân giải đúng. Không nên chạy trực tiếp từ thư mục \texttt{src/} vì các đường dẫn tương đối của ứng dụng được thiết kế theo gốc repository.
+
+\section*{C. Ma trận độ phức tạp thao tác}
+Bảng dưới đây tóm tắt độ phức tạp theo cấu trúc hiện tại. Ký hiệu $n$ là số mặt hàng, $k$ là số kết quả trong khoảng khóa, $d$ là số hóa đơn và $c$ là tổng số dòng chi tiết của các hóa đơn được duyệt.
+\begin{table}[H]
+\centering
+\caption{Độ phức tạp của các thao tác chính}
+\small
+\begin{tabular}{@{}p{4.2cm}p{2.1cm}p{6.5cm}@{}}
+\toprule
+\textbf{Thao tác} & \textbf{Độ phức tạp} & \textbf{Giải thích} \\
+\midrule
+Tìm kiếm theo mã & $O(\log n)$ & Đi theo một nhánh cây AVL. \\
+Thêm mặt hàng & $O(\log n)$ & Tìm vị trí chèn và cập nhật cân bằng. \\
+Xóa mặt hàng & $O(\log n)$ & Tìm nút, xóa và cân bằng đường đi lên gốc. \\
+Duyệt toàn bộ kho & $O(n)$ & Mỗi nút được thăm đúng một lần. \\
+Range search theo mã & $O(\log n+k)$ & Tìm vùng bắt đầu và duyệt các nút thuộc đoạn. \\
+Lọc theo khoảng giá & $O(n)$ & Duyệt toàn bộ vì cây không khóa theo giá. \\
+Lập hóa đơn có $r$ dòng & $O(r\log n)$ & Mỗi dòng tìm một mã hàng trong cây; bỏ qua chi phí nhập/xuất console. \\
+Cảnh báo tồn tối thiểu & $O(n)$ & Kiểm tra điều kiện trên toàn bộ mặt hàng. \\
+Lưu kho và hóa đơn & $O(n+d+c)$ & Ghi toàn bộ bản ghi mặt hàng, hóa đơn và chi tiết. \\
+Nạp file và dựng cây & $O(n\log n+d+c)$ & Đọc bản ghi rồi chèn từng mặt hàng vào AVL. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Các độ phức tạp nêu trên là mô tả số thao tác theo kích thước đầu vào, không bao gồm chi phí nhập xuất console hoặc thời gian truy cập thiết bị lưu trữ cụ thể. Khi cần phân tích thực tế, phải đo riêng từng tác vụ và mô tả kích thước đầu vào tương ứng.
+
+\section*{D. Bảng kiểm thử nghiệm thu}
+\begin{table}[H]
+\centering
+\caption{Checklist các bằng chứng kỹ thuật được ghi nhận}
+\small
+\begin{tabular}{@{}p{3cm}p{6.7cm}p{3cm}@{}}
+\toprule
+\textbf{Nhóm} & \textbf{Bằng chứng trong lần kiểm tra} & \textbf{Kết quả} \\
+\midrule
+Build & \texttt{make clean} và \texttt{make} với GCC 14.2.0, C++11, \texttt{-O2}. & Thành công \\
+AVL & 12 phép quay, 12 ca xóa, 2 ca const/move, 9 ca range search. & 35/35 đạt \\
+FileIO & Ghi/đọc, file rỗng, file thiếu, file cụt, magic/version sai, dữ liệu mặt hàng vô lý, mã trùng, chi tiết hóa đơn không hợp lệ; file 3 byte và 0 byte bị từ chối; nạp file hỏng không làm đổi kho đang có. & 13 kiểm tra đạt \\
+Kho & Nạp CSV, CRUD, nhập/xuất, chặn vượt tồn, chặn tràn \texttt{INT\_MAX} khi nhập kho, ngày theo lịch thực tế (31/02, 31/04, năm nhuận), cảnh báo, range search, lưu/nạp. & Các assertion đạt \\
+Hóa đơn & Lập hóa đơn theo giao dịch; EOF/hủy xác nhận không trừ kho; mã trùng, lặp mã hàng, tổng tiền tràn; thống kê ngày/tháng. & 55/55 đạt \\
+Khởi động & \texttt{tests/test\_khoi\_dong.sh}: chưa có \texttt{kho.dat}; file 3 byte / 0 byte / bị cắt không bị ghi đè; sao lưu \texttt{kho.dat.hongN}; khôi phục file hợp lệ. & 12/12 đạt \\
+Benchmark & 4 quy mô; 1.000 truy vấn; 9 lần đo; vector sorted + lower\_bound và 100 chèn/xóa. & Có bảng, biểu đồ và stdout \\
+Báo cáo & Hai lượt XeLaTeX, rà soát PDF và số trang sau khi ghép phụ lục. & 42 trang A4 \\
+Sanitizer & \texttt{make asan} với AddressSanitizer và UndefinedBehaviorSanitizer; tất cả test chạy qua. & Thành công \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Các trạng thái trên chỉ phản ánh các lệnh đã chạy trong môi trường kiểm tra của lần bàn giao này. Chúng không chứng minh rằng pull request đã được merge trên GitHub, task đã được cập nhật trên Jira hoặc giảng viên đã nhận được bản LaTeX.
+
+\section*{E. Checklist thao tác demo}
+Trình tự demo nên được tiến hành trên một bản build sạch để tránh sử dụng file nhị phân từ lần chạy cũ:
+\begin{enumerate}
+  \item Chạy \texttt{make clean} rồi \texttt{make}; xác nhận hai executable được tạo.
+  \item Chạy \texttt{./main\_app}; quan sát thông báo nạp 50 mặt hàng CSV nếu chưa tồn tại \texttt{kho.dat}.
+  \item Mở phân hệ kho; duyệt danh sách theo mã; tìm một mã có thật và một mã không có.
+  \item Thêm mã mới; thử thêm lại cùng mã để trình bày cơ chế từ chối trùng.
+  \item Thử xuất vượt tồn và xác nhận số lượng tồn không bị thay đổi; tiếp đó xuất một lượng hợp lệ.
+  \item Mở phân hệ hóa đơn; lập hóa đơn nhỏ với một hoặc hai mặt hàng; đối chiếu tổng tiền và tồn sau bán.
+  \item Lưu dữ liệu; thoát chương trình; mở lại để xác nhận phục hồi từ file nhị phân.
+  \item Trình bày cơ chế bảo vệ dữ liệu: chạy \texttt{sh tests/test\_khoi\_dong.sh} để kiểm tra \texttt{kho.dat} hỏng không bị ghi đè (script chạy trong thư mục tạm, không làm hỏng file dữ liệu của buổi demo).
+  \item Chạy \texttt{./benchmark\_app}; trình bày cách đọc bảng, số truy vấn, trung vị và giới hạn của kết quả.
+\end{enumerate}
+
+\section*{F. Câu hỏi phản biện nên chuẩn bị}
+\begin{itemize}
+  \item Vì sao chọn AVL thay cho BST thường? Cần trả lời bằng giới hạn chiều cao và ảnh hưởng của cây suy biến.
+  \item Vì sao range search theo mã là $O(\log n+k)$ nhưng tìm theo khoảng giá là $O(n)$? Vì khóa trong cây là mã hàng, không phải giá bán.
+  \item Vì sao thời gian AVL có thể khác giữa hai máy? Cần đề cập CPU, compiler, cờ tối ưu, tải nền, cache và phương pháp đo.
+  \item Vì sao không ghi 0 microsecond? Vì phép đo có thể nhỏ hơn một đơn vị của kiểu thời gian bị ép kiểu; phiên bản mới đo nanosecond và hiển thị microsecond dạng thập phân.
+  \item Vì sao file nhị phân có thể không đọc được trên bản build khác? Vì ghi trực tiếp struct chịu ảnh hưởng ABI và kích thước trường; header chỉ phát hiện một số trường hợp không tương thích.
+  \item Điều gì xảy ra khi file hỏng? Module đọc vào vùng tạm, kiểm tra header/kích thước/nội dung và chỉ nạp khi hợp lệ. Khi khởi động gặp \texttt{kho.dat} hỏng, chương trình báo lỗi và không tự ghi đè; người dùng chọn thoát hoặc sao lưu thành \texttt{kho.dat.hongN} rồi dùng dữ liệu mẫu.
+  \item Vì sao phải kiểm tra tràn số trước phép cộng? Vì tràn số nguyên có dấu là hành vi không xác định; so sánh \texttt{soLuongNhap > INT\_MAX - soLuongTon} không bao giờ thực hiện phép cộng gây tràn.
+  \item Vì sao cần kiểm tra ngày theo lịch? Chỉ kiểm tra ngày trong khoảng 1--31 sẽ nhận 31/02; hàm \texttt{ngayHopLe()} dùng số ngày thực của từng tháng và quy tắc năm nhuận.
+\end{itemize}
+
+\section*{G. Minh chứng quy trình còn phải bổ sung}
+Trước khi chốt bản nộp, nhóm cần lưu các bằng chứng không thể kiểm tra từ mã nguồn trong gói: (1) link hoặc ảnh chụp Jira với assignee, trạng thái và deadline; (2) lịch sử commit của từng thành viên và pull request tương ứng; (3) xác nhận chia sẻ bản LaTeX cho giảng viên ở T04; (4) ghi chú đọc chéo báo cáo ở T53; và (5) checklist hoặc biên bản tập dượt demo ở T52. Các nội dung này cần được bổ sung bởi thành viên có quyền truy cập hệ thống thực tế; báo cáo không tự gán trạng thái hoàn tất.
+
+
+\clearpage
+\section*{H. Mẫu biên bản đọc chéo và tập dượt demo}
+Mẫu dưới đây được để trống có chủ đích để các thành viên ghi nhận hoạt động thực tế. Khi hoàn tất, nên điền ngày giờ, người tham gia, lỗi phát hiện và hướng xử lý; không đánh dấu trước những nội dung chưa diễn ra.
+
+\begin{table}[H]
+\centering
+\caption{Mẫu ghi nhận tập dượt demo (T52)}
+\small
+\begin{tabular}{@{}p{4cm}p{9cm}@{}}
+\toprule
+\textbf{Thông tin} & \textbf{Nội dung ghi nhận} \\
+\midrule
+Ngày, giờ tập dượt & \rule{8cm}{0.4pt} \\
+Thành viên tham gia & \rule{8cm}{0.4pt} \\
+Máy và môi trường chạy & \rule{8cm}{0.4pt} \\
+Phiên bản commit/build & \rule{8cm}{0.4pt} \\
+Lỗi phát hiện & \rule{8cm}{0.4pt} \\
+Người nhận xử lý & \rule{8cm}{0.4pt} \\
+Kết quả chạy lại & \rule{8cm}{0.4pt} \\
+Xác nhận của nhóm & \rule{8cm}{0.4pt} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Mẫu ghi nhận đọc chéo báo cáo (T53)}
+\small
+\begin{tabular}{@{}p{2.4cm}p{2.4cm}p{5.7cm}p{2.1cm}@{}}
+\toprule
+\textbf{Người đọc} & \textbf{Chương/phần} & \textbf{Góp ý hoặc lỗi cần sửa} & \textbf{Trạng thái} \\
+\midrule
+TV1 & & & \\
+TV2 & & & \\
+TV3 & & & \\
+TV4 & & & \\
+TV5 & & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Sau khi điền, nhóm lưu biên bản cùng phiên bản báo cáo đã chốt để có thể truy nguyên góp ý. Nếu không phát hiện lỗi, vẫn nên ghi rõ phần đã đọc, ngày đọc và xác nhận của người đọc; để trống không đồng nghĩa với đã review.
