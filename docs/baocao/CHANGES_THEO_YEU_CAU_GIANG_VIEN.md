@@ -2,7 +2,7 @@
 
 Bản cập nhật này giữ nguyên nội dung kỹ thuật đã có, đồng thời chuẩn hóa tên chương, mục lục và thứ tự phần theo danh sách yêu cầu.
 
-1. Trang bìa: giữ trang bìa hiện có và thông tin nhóm ĐT05.
+1. Trang bìa: bổ sung thông tin lớp **Kỹ thuật điện tử viễn thông K66**, giữ nguyên thông tin trường, giảng viên, nhóm và 5 thành viên.
 2. Lời nói đầu: giữ lại, cập nhật mô tả benchmark cho đúng với phép đo thực tế (AVL so với vector đã sắp xếp dùng `std::lower_bound`; các quy mô 1.000, 10.000, 50.000 và 100.000).
 3. Mục lục: có đủ Lời nói đầu, Chương 1–4, Kết luận, Tài liệu tham khảo và phụ lục; thêm mục Tài liệu tham khảo vào mục lục.
 4. Chương 1: đổi tên thành “Nghiệp vụ và phân tích bài toán”.
