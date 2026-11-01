@@ -1,26 +1,31 @@
-# KỊCH BẢN DEMO BẢO VỆ ĐỒ ÁN ĐT05 (TASK T51 - TV5)
+# KỊCH BẢN DEMO BẢO VỆ ĐỒ ÁN ĐT05 (TASK T51 – TV5: Nguyễn Duy Khang – 6651020037)
 
-## Thứ tự trình bày và thao tác trên chương trình `main_app`
+## Phân công người trình bày trực tiếp trên chương trình `./main_app`
 
-1. **Phần 1 – Khởi động & Nạp dữ liệu mẫu (TV1 & TV5 - 2 phút):**
-   - Chạy `./main_app`, giới thiệu tính năng tự động nạp 50 mặt hàng mẫu từ `data/du_lieu_mau.csv` vào cây AVL (chiều cao $h = 6$).
-   - Thử nhập chữ `"abc"` hoặc số `99` tại menu chính để chứng minh chương trình bắt lỗi nhập liệu an toàn, không bị treo.
+| Thứ tự | Thời lượng | Người trình bày | Nội dung & Thao tác thực hiện trên Console |
+|---|---|---|---|
+| **Phần 1** | 2 phút | **TV1 – Đoàn Quốc Nhật** & **TV5 – Nguyễn Duy Khang** | Khởi động `./main_app`, giới thiệu kiến trúc tích hợp và tự động nạp 50 mặt hàng mẫu (`h = 6`). Thử nhập chuỗi `"abc"` và số `99` tại Menu để chứng minh cơ chế chống trôi lệnh và bắt lỗi nhập liệu. |
+| **Phần 2** | 3 phút | **TV2 – Huỳnh Long Nhật** & **TV3 – Trần Văn Tài** | Vào **Menu 1 (Quản lý Kho)**: <br>- Chọn `1`: In danh sách 50 mặt hàng tăng dần theo mã (duyệt `inorder` LNR).<br>- Chọn `2`: Thêm `MH051` ("Nuoc ngot 7Up 330ml") và thử thêm lặp lại `MH051` để chứng minh cây AVL chặn trùng khóa.<br>- Chọn `6`: Tra cứu khoảng mã `MH001`..`MH005` bằng `rangeSearch` $O(\log n + k)$.<br>- Chọn `9` & `10`: Xuất kho `MH002` với SL `100` (chứng minh chặn xuất quá tồn), sau đó xuất `5` sản phẩm và mở Bảng cảnh báo tồn kho tối thiểu. |
+| **Phần 3** | 3 phút | **TV4 – Hoàng Xuân Nhuật** | Vào **Menu 2 (Hóa đơn & Doanh thu)**:<br>- Chọn `1`: Lập hóa đơn `HD001` ngày `28 10 2026`, mua `MH001` (SL: 10) và `MH005` (SL: 5), xác nhận toàn bộ hóa đơn rồi kiểm chứng tồn kho mới giảm; thử EOF/hủy xác nhận để thấy tồn không đổi.<br>- Chọn `2`, `3`, `4`: Xem danh sách hóa đơn, thống kê doanh thu ngày/tháng và Top 5 mặt hàng bán chạy nhất. |
+| **Phần 4** | 2 phút | **TV5 – Nguyễn Duy Khang** & **TV4 – Hoàng Xuân Nhuật** | - Chọn **Menu 4**: Chạy Benchmark so sánh tốc độ tìm kiếm giữa Cây AVL và Vector ở 4 quy mô (1.000 / 10.000 / 50.000 / 100.000 mặt hàng).<br>- Chọn **Menu 3**: Lưu kho ra file nhị phân `kho.dat` (`3 -> 1`), xóa trắng RAM (`3 -> 4`), sau đó nạp lại từ `kho.dat` (`3 -> 2`) để chứng minh phục hồi nguyên vẹn dữ liệu. |
 
-2. **Phần 2 – Cấu trúc Cây AVL & Quản lý Kho hàng (TV2 & TV3 - 3 phút):**
-   - Chọn **Menu 1 (Phân hệ Quản lý Kho hàng)**:
-     - Chọn `1`: Hiển thị danh sách 50 mặt hàng tăng dần theo mã (duyệt `inorder` LNR).
-     - Chọn `2`: Thêm mặt hàng mới `MH051` ("Nuoc ngot 7Up 330ml", giá 10.000đ, tồn 30, tồn tối thiểu 10). Thử thêm lại `MH051` để chứng minh cây AVL chặn trùng khóa.
-     - Chọn `6`: Tra cứu khoảng mã từ `MH001` đến `MH005` bằng thuật toán `rangeSearch` $O(\log n + k)$.
-     - Chọn `9`: Xuất kho mặt hàng `MH002` với số lượng `100` (chứng minh chặn xuất quá tồn vì chỉ còn 8), sau đó xuất `5` sản phẩm để kích hoạt cảnh báo chạm ngưỡng tồn tối thiểu.
-     - Chọn `10`: Hiển thị bảng cảnh báo tồn kho tối thiểu (các mặt hàng `MH002`, `MH004`, `MH009`, `MH014`, `MH017`, `MH025`, `MH029`, `MH035`, `MH042`, `MH043`, `MH049`).
 
-3. **Phần 3 – Lập Hóa đơn, Thống kê Doanh thu & Top Bán chạy (TV4 - 3 phút):**
-   - Chọn **Menu 2 (Phân hệ Hóa đơn & Doanh thu)**:
-     - Chọn `1`: Lập hóa đơn `HD001` ngày `28 10 2026`, mua `MH001` (SL: 10) và `MH005` (SL: 5). Chứng minh tồn kho trên cây AVL giảm tự động.
-     - Chọn `2`: Xem lại chi tiết hóa đơn `HD001` vừa lập.
-     - Chọn `3`: Thống kê doanh thu ngày `28 10 2026` và tháng `10 2026`.
-     - Chọn `4`: Xem bảng xếp hạng Top 5 mặt hàng bán chạy nhất.
+## Số liệu tham chiếu đã đồng bộ với báo cáo và slide
 
-4. **Phần 4 – Lưu/Đọc File nhị phân & Benchmark Hiệu năng (TV4 & TV5 - 2 phút):**
-   - Chọn **Menu 4**: Chạy trực tiếp Benchmark đo thời gian tìm kiếm trên 1.000, 10.000 và 50.000 mặt hàng giữa Cây AVL và Vector.
-   - Chọn **Menu 3**: Lưu dữ liệu ra file nhị phân `kho.dat` (`Menu 3 -> 1`), xóa trắng RAM (`Menu 3 -> 4`), rồi khôi phục lại từ `kho.dat` (`Menu 3 -> 2`) để chứng minh toàn bộ 51 mặt hàng và hóa đơn `HD001` được phục hồi nguyên vẹn.
+Mỗi điểm là trung vị 9 lần đo, mỗi lần 1.000 truy vấn; tổng thời gian tính bằng microsecond.
+
+| Quy mô | AVL (µs) | Vector sorted + lower_bound (µs) | Vector/AVL |
+|---:|---:|---:|---:|
+| 1.000 | 100,089 | 64,496 | 0,64 |
+| 10.000 | 192,745 | 122,081 | 0,63 |
+| 50.000 | 284,702 | 187,238 | 0,66 |
+| 100.000 | 389,176 | 216,581 | 0,56 |
+
+Ở mốc 100.000 mặt hàng, 100 lần chèn: AVL 23,595 µs, vector 40.817,120 µs; 100 lần xóa: AVL 177,273 µs, vector 21.948,953 µs. Số liệu là trung vị của 9 lần đo trong môi trường GCC 14.2.0 / Linux x86_64, AMD EPYC 9V74, 3 CPU logic trong container. Khi demo trên máy khác, chạy lại benchmark và nêu rõ cấu hình; không trình bày số trên như cam kết thời gian cố định.
+
+## Checklist trước buổi bảo vệ
+
+- [ ] Ghép 5 gói vào một repo và chạy `make clean && make -j2 && make test`.
+- [ ] Chạy thử các luồng kho, bán hàng, thống kê, lưu/nạp file trên đúng máy demo.
+- [ ] Chạy `./benchmark_app`; đối chiếu với số liệu trong slide nếu vẫn dùng bản build/môi trường chuẩn.
+- [ ] Cả 5 thành viên tập dượt và hỏi đáp chéo. Checklist này chỉ được tick sau buổi tập dượt thực tế (T52).
