@@ -4,11 +4,15 @@ cd /d "%~dp0"
 where xelatex >nul 2>nul
 if errorlevel 1 goto noxelatex
 
-echo [1/2] Dang bien dich LaTeX bang XeLaTeX...
+echo [1/3] Dang bien dich LaTeX bang XeLaTeX...
 xelatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
 if errorlevel 1 goto error
 
-echo [2/2] Cap nhat muc luc va tham chieu...
+echo [2/3] Cap nhat muc luc va tham chieu...
+xelatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
+if errorlevel 1 goto error
+
+echo [3/3] Chot so trang, muc luc va tham chieu...
 xelatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
 if errorlevel 1 goto error
 

@@ -1,7 +1,31 @@
 % ============================================================================
 % Chuong 4 - ket qua benchmark chay lai tren cung mot moi truong
 % ============================================================================
-\chapter{Thực nghiệm và Đánh giá Hiệu năng}
+\chapter{Đánh giá độ phức tạp và kết quả thử nghiệm}
+
+\section{Đánh giá độ phức tạp theo lý thuyết}
+Phân tích chi tiết các phép toán trên cây AVL đã được trình bày tại Mục~2.8. Phần này tổng hợp độ phức tạp của các thao tác chính khi áp dụng vào hệ thống quản lý kho. Gọi $n$ là số mặt hàng trong kho và $k$ là số phần tử được trả về bởi truy vấn theo khoảng mã.
+
+\begin{table}[H]
+\centering
+\caption{Độ phức tạp lý thuyết của các thao tác trong hệ thống}
+\label{tab:complexity_system_ch4}
+\small
+\begin{tabular}{@{}p{4.0cm}p{2.5cm}p{6.0cm}@{}}
+\toprule
+\textbf{Thao tác} & \textbf{Độ phức tạp} & \textbf{Giải thích} \\
+\midrule
+Tìm mặt hàng theo mã & $O(\log n)$ & Đi theo một đường từ gốc đến nút cần tìm trong cây AVL. \\
+Thêm hoặc xóa mặt hàng & $O(\log n)$ & Tìm vị trí theo khóa và cập nhật cân bằng trên đường đi. \\
+Sửa thông tin, nhập hoặc xuất tồn & $O(\log n)$ & Tìm theo mã hàng; phần cập nhật các trường dữ liệu có chi phí $O(1)$. \\
+Duyệt toàn bộ danh mục & $O(n)$ & Mỗi nút của cây được thăm đúng một lần. \\
+Tra cứu khoảng mã & $O(\log n + k)$ & Bỏ qua nhánh ngoài khoảng và chỉ xuất các nút phù hợp. \\
+Lọc theo khoảng giá & $O(n)$ & Cây hiện được tổ chức theo mã hàng, nên phải duyệt danh mục để kiểm tra giá. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Các độ phức tạp trên mô tả chi phí xử lý trong bộ nhớ, chưa tính thời gian nhập/xuất console và đọc/ghi file. Đặc biệt, không nên suy diễn rằng mọi truy vấn đều có $O(\log n)$: truy vấn theo khoảng giá hiện phải duyệt $n$ mặt hàng do chưa có chỉ mục phụ theo giá. Kết quả thực nghiệm ở các mục tiếp theo được dùng để quan sát thời gian thực tế của một số thao tác, không thay thế chứng minh độ phức tạp.
 
 \section{Mục tiêu thực nghiệm}
 Chương này so sánh chi phí tìm kiếm chính xác theo mã hàng của cây AVL với vector đã sắp xếp sử dụng \texttt{std::lower\_bound}. Đây là baseline công bằng hơn so với duyệt tuyến tính: cả hai phương pháp đều khai thác thứ tự khóa và có số phép so sánh tăng theo logarithm. Ngoài tìm kiếm, benchmark đo riêng 100 lần chèn và 100 lần xóa để thể hiện chi phí cập nhật của hai cấu trúc.
@@ -74,7 +98,7 @@ Biểu đồ~\ref{fig:chart_tv4} so sánh hai phương pháp tìm kiếm bằng 
 \label{fig:chart_tv4}
 \end{figure}
 
-\section{Phân tích kết quả và liên hệ độ phức tạp}
+\section{Đánh giá độ phức tạp và phân tích kết quả thử nghiệm}
 Ở quy mô 100.000 mặt hàng, AVL có chiều cao 17 và cần 389,176 $\mu$s cho 1.000 truy vấn; vector đã sắp xếp với \texttt{lower\_bound} cần 216,581 $\mu$s. Trong lần đo này, vector nhanh hơn khoảng 1,79 lần. Kết quả không mâu thuẫn với độ phức tạp lý thuyết: tìm kiếm trên AVL là $O(\log n)$ theo chiều cao cây, còn tìm kiếm nhị phân trên vector đã sắp xếp cũng là $O(\log n)$.
 
 Chênh lệch thời gian thực tế chịu ảnh hưởng của hằng số chi phí và kiến trúc bộ nhớ. Vector lưu phần tử liên tục nên tận dụng locality/cache tốt hơn; thao tác nhị phân thường truy cập ít vùng nhớ và không cần lần theo con trỏ node. AVL phải đi qua các node được cấp phát rời rạc, nên pointer chasing và cache miss có thể làm tăng độ trễ dù chiều cao cây nhỏ. Do vậy, không thể kết luận rằng AVL luôn nhanh hơn vector trong mọi tác vụ chỉ dựa vào ký hiệu $O(\log n)$.
