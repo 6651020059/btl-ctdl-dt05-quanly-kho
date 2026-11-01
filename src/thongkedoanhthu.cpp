@@ -9,13 +9,17 @@ static void xoaBoDemThongKe() {
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
 
+// Kiểm tra ngày hợp lệ theo lịch thực tế (có xét tháng 30/31 ngày và năm nhuận)
+static bool ngayTruyVanHopLe(const Ngay& d) {
+    return ngayHopLe(d, 1, 9999);   // lịch thực tế (ngay.h); không giới hạn 1900-2100 khi truy vấn
+}
+
 void thongKeDoanhThuTheoNgay(const vector<HoaDon>& danhSachHoaDon) {
     Ngay ngayQuery;
     cout << "\n--- THỐNG KÊ DOANH THU THEO NGÀY ---\n";
     cout << "Nhập ngày cần thống kê (Ngay Thang Nam, ví dụ: 22 10 2026): ";
     while (!(cin >> ngayQuery.ngay >> ngayQuery.thang >> ngayQuery.nam) ||
-           ngayQuery.ngay < 1 || ngayQuery.ngay > 31 ||
-           ngayQuery.thang < 1 || ngayQuery.thang > 12 || ngayQuery.nam <= 0) {
+           !ngayTruyVanHopLe(ngayQuery)) {
         if (cin.eof()) return;
         xoaBoDemThongKe();
         cout << "[Lỗi] Định dạng ngày không hợp lệ. Nhập lại (Ngay Thang Nam): ";
@@ -73,7 +77,7 @@ void menuThongKeDoanhThu(const vector<HoaDon>& danhSachHoaDon) {
     int luaChon;
     do {
         cout << "\n========================================\n";
-        cout << "      MENU THỐNG KÊ DOANH THU (T37)     \n";
+        cout << "      MENU THỐNG KÊ DOANH THU          \n";
         cout << "========================================\n";
         cout << "1. Thống kê doanh thu theo ngày\n";
         cout << "2. Thống kê doanh thu theo tháng\n";
@@ -84,6 +88,7 @@ void menuThongKeDoanhThu(const vector<HoaDon>& danhSachHoaDon) {
         if (!(cin >> luaChon)) {
             if (cin.eof()) return;
             xoaBoDemThongKe();
+            cout << "[Lỗi] Lựa chọn phải là số 0, 1 hoặc 2. Vui lòng nhập lại.\n";
             continue;
         }
 
