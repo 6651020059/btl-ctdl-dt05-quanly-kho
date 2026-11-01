@@ -4,9 +4,7 @@
 #include <string>
 #include <vector>
 #include "mathang.h"
-#include "AVLTree.h"
-
-typedef AVLTree<std::string, MatHang> KhoHang;
+#include "khohang.h"
 
 // 1. Nhóm hàm CRUD mặt hàng cốt lõi (Task T28)
 bool themMatHang(KhoHang& kho, const MatHang& mh);
@@ -19,7 +17,7 @@ void timTheoKhoangGia(const KhoHang& kho, long long giaTu, long long giaDen, std
 void timTheoKhoangMa(const KhoHang& kho, const std::string& maTu, const std::string& maDen, std::vector<MatHang>& ketQua);
 
 // 2. Nhóm hàm nạp bộ dữ liệu mẫu >= 50 mặt hàng (Task T29)
-int napDuLieuMauTuFile(KhoHang& kho, const std::string& tenFile = "data/du_lieu_mau.csv");
+int napDuLieuMauTuFile(KhoHang& kho, const std::string& tenFile = "du_lieu_mau.csv");
 int khoiTaoDuLieuMau50MatHang(KhoHang& kho);
 
 // 3. Nhóm hàm nghiệp vụ nhập kho & xuất kho (Task T30)
