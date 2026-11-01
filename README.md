@@ -1,81 +1,217 @@
-# ĐỀ TÀI ĐT05: HỆ THỐNG QUẢN LÝ HÀNG TỒN KHO & DOANH THU SIÊU THỊ (CÂY CÂN BẰNG AVL)
+# ĐT05 – Hệ thống quản lý hàng tồn kho và doanh thu siêu thị sử dụng cây AVL
 
-Bài tập lớn môn **Cấu trúc Dữ liệu và Giải thuật** – Cài đặt cây nhị phân tìm kiếm tự cân bằng `AVLTree<K, V>` ứng dụng quản lý kho hàng, lập hóa đơn bán hàng, thống kê doanh thu và đánh giá hiệu năng thực nghiệm.
+Bài tập lớn học phần **Cấu trúc dữ liệu và Giải thuật** – Lớp **Kỹ thuật điện tử viễn thông K66**.
 
----
+| Thông tin | Nội dung |
+|---|---|
+| Đề tài | Hệ thống quản lý hàng tồn kho và doanh thu siêu thị sử dụng cây cân bằng AVL |
+| Nhóm | ĐT05 |
+| Giảng viên hướng dẫn | Trần Thị Dung |
+| Repository | <https://github.com/6651020059/btl-ctdl-dt05-quanly-kho> |
 
-## 1. Phân công nhiệm vụ và sản phẩm của 5 thành viên
+## 1. Giới thiệu đề tài
 
-| Thành viên | Họ và tên – MSSV | Nhánh Git (Feature Branch) | Các file phụ trách chính | Mã Task (Jira) | Đóng góp |
-|---|---|---|---|---|---|
-| **TV1 (Nhóm trưởng)** | **Đoàn Quốc Nhật** (`6651020059`) | `main` / `feature/main-integration` | `README.md`, `Makefile`, `include/ngay.h`, `src/main.cpp`, `tests/test_khoi_dong.sh`, `docs/BienBan_T03_ChotGiaoDien.md`, `docs/baocao/main.tex`, `loimoidau.tex`, `ketluan.tex`, `phuluc_phancong.tex` | T01 – T15 | Chưa xác minh từ commit/Jira |
-| **TV2 (Cây AVL)** | **Huỳnh Long Nhật** (`6651020061`) | `feature/avl-tree` | `include/AVLTree.h`, `include/AVLTree.tpp`, `tests/T23_test_suite.cpp`, `docs/baocao/chuong2_avl.tex`, `docs/baocao/T25_ra_soat_loi_AVL.md` | T16 – T25 | Chưa xác minh từ commit/Jira |
-| **TV3 (Quản lý Kho)** | **Trần Văn Tài** (`6651020077`) | `feature/module-kho` | `include/mathang.h`, `include/quan_ly_kho.h`, `src/quan_ly_kho.cpp`, `data/du_lieu_mau.csv`, `tests/test_kho.cpp`, `docs/baocao/chuong1_kho.tex`, `chuong3_kho.tex`, `report.pdf` | T26 – T34 | Chưa xác minh từ commit/Jira |
-| **TV4 (Hóa đơn & Doanh thu)** | **Hoàng Xuân Nhuật** (`6651020062`) | `feature/module-doanh-thu` | `include/hoadon.h`, `include/lap_hoa_don.h`, `src/lap_hoa_don.cpp`, `include/thongkedoanhthu.h`, `src/thongkedoanhthu.cpp`, `include/thongketop.h`, `include/Chuongtrinhsinhvadodulieu.h`, `src/benchmark.cpp`, `docs/baocao/chuong3_doanhthu.tex`, `chuong4_benchmark.tex` | T35 – T43 | Chưa xác minh từ commit/Jira |
-| **TV5 (File nhị phân & Demo)** | **Nguyễn Duy Khang** (`6651020037`) | `feature/fileio-ui` | `include/FileIO.h`, `tests/test_fileio.cpp`, `docs/baocao/chuong3_file_giaodien.tex`, `docs/demo_slide/T50_Slide_BaoVe_DT05.pptx`, `T50_Slide_TomTat.md`, `T51_KichBan_Demo.md` | T44 – T52 | Chưa xác minh từ commit/Jira |
+Dự án xây dựng chương trình quản lý hàng tồn kho và doanh thu siêu thị bằng **C++11**. Cấu trúc dữ liệu trung tâm là cây tìm kiếm nhị phân tự cân bằng **AVLTree<K, V>**, được cài đặt để quản lý danh mục mặt hàng và hỗ trợ tra cứu theo khóa.
 
----
+Chương trình có giao diện dòng lệnh (console), phục vụ các nghiệp vụ chính: quản lý danh mục hàng hóa; nhập kho, xuất kho; cảnh báo tồn kho tối thiểu; lập hóa đơn bán hàng; thống kê doanh thu; lưu và khôi phục dữ liệu bằng file nhị phân. Dự án cũng có chương trình benchmark để so sánh thời gian tra cứu của AVL với phương pháp tìm kiếm trên vector đã sắp xếp.
 
-## 2. Biên bản chốt giao diện & Đặc tả File nhị phân (Task T03 & T44)
+**Phạm vi hiện tại:** đây là ứng dụng C++ chạy trên console, không phải ứng dụng web. Repository hiện chưa cung cấp frontend web, HTTP API, đăng nhập/phân quyền hoặc cơ sở dữ liệu máy chủ.
 
-1. **Khóa chính trên cây AVL (`K`):** `std::string` (`maHang` tối đa 15 ký tự, không cho phép trùng khóa).
-2. **Cấu trúc `MatHang` (`V`):**
-   - `char maHang[16]`, `char tenHang[64]`, `long long donGia`, `int soLuongTon`, `int tonToiThieu`, `Ngay ngayNhap`.
-3. **Chữ ký 9 hàm công khai của `AVLTree<K, V>`:**
-   - `bool insert(const K& key, const V& value);`
-   - `bool remove(const K& key);`
-   - `V* search(const K& key);` và `const V* search(const K& key) const;` (quyền sửa phụ thuộc constness của cây).
-   - Hỗ trợ move constructor/move assignment; copy bị vô hiệu hóa để tránh sao chép cây ngoài ý muốn.
-   - `void rangeSearch(const K& lo, const K& hi, std::vector<V>& result) const;`
-   - `std::vector<V> inorder() const;`
-   - `int size() const;`, `int height() const;`, `bool empty() const;`, `void clear();`
-4. **Định dạng File nhị phân (`kho.dat`):**
-   - Bố cục tuần tự bản ghi độ dài cố định: `[FileHeader (24 bytes)][MatHang x soMatHang][HoaDon x soHoaDon]`.
-   - `FileHeader`: `magic[4] = "SMK1"`, `version = 1`, `kichThuocMH = sizeof(MatHang)`, `kichThuocHD = sizeof(HoaDon)`, `soMatHang`, `soHoaDon`.
-   - Ghi an toàn qua file tạm `kho.dat.tmp` rồi `rename` sang `kho.dat`.
-5. **Bảo vệ dữ liệu khi khởi động (`src/main.cpp`):** chương trình phân biệt 3 tình huống, không bao giờ tự ghi đè `kho.dat` của người dùng:
-   - `kho.dat` đọc được → khôi phục kho và hóa đơn.
-   - `kho.dat` chưa tồn tại → nạp 50 mặt hàng mẫu từ `data/du_lieu_mau.csv`.
-   - `kho.dat` tồn tại nhưng hỏng/không đọc được (rỗng, bị cắt, sai định dạng, không có quyền đọc...) → báo lỗi kèm lý do và để người dùng chọn: **thoát giữ nguyên file**, hoặc **sao lưu thành `kho.dat.hongN`** rồi dùng dữ liệu mẫu (không bao giờ ghi đè bản sao lưu cũ; sao lưu thất bại thì dừng).
-6. **Kiểm tra ngày theo lịch thực tế:** dùng chung hàm `ngayHopLe()` trong `include/ngay.h` (tháng 30/31 ngày, năm nhuận). 31/02, 31/04, 29/02 năm thường bị từ chối ở cả nhập kho, lập hóa đơn và thống kê.
-7. **Chặn tràn số khi nhập kho:** `nhapKho()` so sánh `soLuongNhap > INT_MAX - soLuongTon` **trước** khi cộng; vượt giới hạn thì từ chối và giữ nguyên tồn kho.
-8. **Lập hóa đơn theo giao dịch:** các dòng hàng được kiểm tra và gom trước; chỉ trừ tồn sau khi người dùng xác nhận toàn bộ. EOF/hủy giữa chừng không lưu hóa đơn và không thay đổi tồn.
-9. **Header dùng chung:** alias `KhoHang` được khai báo một lần trong `include/khohang.h`; helper trừ tồn dùng chung nằm trong `include/nghiep_vu_ton.h`.
+## 2. Chức năng chính
 
----
+- **Cây AVL:** thêm, xóa, tìm kiếm, duyệt inorder và tra cứu theo khoảng khóa; tự cân bằng bằng các phép quay LL, RR, LR, RL.
+- **Quản lý mặt hàng:** thêm, sửa, xóa, tìm kiếm theo mã; liệt kê danh mục và tra cứu theo phạm vi.
+- **Quản lý kho:** nhập kho, xuất kho, kiểm tra số lượng hợp lệ và cảnh báo khi tồn kho chạm/vượt ngưỡng tối thiểu.
+- **Bán hàng và hóa đơn:** lập hóa đơn, kiểm tra tồn trước khi bán, tính thành tiền và cập nhật lượng tồn sau giao dịch hợp lệ.
+- **Thống kê:** tổng hợp doanh thu theo ngày/tháng và thống kê mặt hàng bán chạy.
+- **Lưu trữ:** lưu/đọc dữ liệu kho và hóa đơn bằng file nhị phân `kho.dat`; có dữ liệu CSV mẫu để khởi tạo khi chưa có file dữ liệu lưu.
+- **Benchmark:** đo thời gian tìm kiếm và thao tác trên các bộ dữ liệu thử nghiệm.
 
-## 3. Hướng dẫn Biên dịch và Chạy chương trình
+## 3. Công nghệ và yêu cầu môi trường
 
-### Cách 1: Dùng `make` (khuyến nghị – Linux / macOS / Windows có MinGW)
+- C++11.
+- GCC/G++ có hỗ trợ C++11.
+- GNU Make.
+- Bash/sh để chạy một số lệnh kiểm thử trong Makefile.
+- XeLaTeX và TeX Live hoặc MiKTeX nếu cần biên dịch lại báo cáo LaTeX.
+
+### Cài công cụ trên Ubuntu/Debian
+
+Mở Terminal và chạy:
+
 ```bash
-make          # biên dịch main_app và benchmark_app
-./main_app    # chạy chương trình chính (chạy từ thư mục gốc của repo để đọc data/du_lieu_mau.csv)
-./benchmark_app   # chạy benchmark độc lập (Task T40)
-make test     # biên dịch và chạy toàn bộ bộ kiểm thử
-make asan     # chạy bộ kiểm thử với AddressSanitizer + UndefinedBehaviorSanitizer
+sudo apt update
+sudo apt install -y build-essential make
+```
+
+`build-essential` cung cấp GCC/G++ và các công cụ biên dịch cần thiết. Nếu cần biên dịch báo cáo LaTeX, cài TeX Live có XeLaTeX (có thể cần bộ gói LaTeX bổ sung theo các package được khai báo trong `main.tex`).
+
+### Trên Windows
+
+Có thể sử dụng **WSL2 với Ubuntu**. Sau khi cài Ubuntu, chạy lệnh cài đặt ở trên. Cách này cung cấp môi trường GNU Make và shell tương thích với các lệnh trong Makefile. Nếu dùng môi trường Windows khác, cần bảo đảm đã cài G++/GNU Make và shell tương thích.
+
+## 4. Tải mã nguồn
+
+Clone repository:
+
+```bash
+git clone https://github.com/6651020059/btl-ctdl-dt05-quanly-kho.git
+cd btl-ctdl-dt05-quanly-kho
+```
+
+Các lệnh build, chạy chương trình và kiểm thử bên dưới cần được thực hiện tại **thư mục gốc repository**.
+
+## 5. Biên dịch chương trình C++
+
+Xóa các sản phẩm build cũ (nếu có) và biên dịch các chương trình:
+
+```bash
+make clean
+make all
+```
+
+Sau khi build thành công, thư mục gốc sẽ có hai chương trình:
+
+- `main_app`: chương trình quản lý kho và doanh thu.
+- `benchmark_app`: chương trình benchmark.
+
+### Chạy chương trình chính
+
+```bash
+./main_app
+```
+
+Chạy từ thư mục gốc repository để chương trình tìm đúng đường dẫn dữ liệu tương đối. Khi chưa có `kho.dat` hợp lệ, chương trình có thể nạp dữ liệu mẫu từ `data/du_lieu_mau.csv` theo luồng khởi tạo được cài đặt.
+
+### Chạy benchmark
+
+```bash
+./benchmark_app
+```
+
+Kết quả benchmark phụ thuộc môi trường phần cứng, trình biên dịch, cờ tối ưu và dữ liệu đầu vào; khi báo cáo số liệu cần ghi lại môi trường chạy tương ứng.
+
+## 6. Chạy kiểm thử
+
+Chạy toàn bộ bộ kiểm thử:
+
+```bash
+make test
+```
+
+Chạy lại các kiểm thử với AddressSanitizer và UndefinedBehaviorSanitizer:
+
+```bash
+make asan
+```
+
+`make asan` sẽ thực hiện clean và build/test với các cờ sanitizer. Nếu cần chạy lại bản build thông thường sau đó, dùng:
+
+```bash
+make clean
+make all
+```
+
+Lệnh dọn sản phẩm build:
+
+```bash
 make clean
 ```
 
-### Cách 2: Dùng `g++` trực tiếp (Windows / Dev-C++ / Linux / macOS)
-Chạy các lệnh sau tại thư mục gốc của repo:
-```bash
-# Biên dịch chương trình chính
-g++ -std=c++11 -Wall -Wextra -O2 -Iinclude src/main.cpp src/quan_ly_kho.cpp src/lap_hoa_don.cpp src/thongkedoanhthu.cpp -o main_app
+**Lưu ý dữ liệu:** `kho.dat` là dữ liệu nhị phân phát sinh khi sử dụng chương trình. Không xóa hoặc ghi đè file này nếu đang chứa dữ liệu cần giữ. Các lệnh kiểm thử dùng file tạm; Makefile được thiết kế để dọn các file kiểm thử mà không chủ động xóa `kho.dat` của người dùng.
 
-# Biên dịch chương trình Benchmark độc lập (Task T40)
-g++ -std=c++11 -Wall -Wextra -O2 -Iinclude src/benchmark.cpp -o benchmark_app
+## 7. Cấu trúc repository
+
+```text
+.
+├── include/                  # Header: AVL, mặt hàng, kho, hóa đơn, FileIO...
+├── src/                      # Chương trình chính, quản lý kho, hóa đơn, doanh thu, benchmark
+├── tests/                    # Unit test và kiểm thử tích hợp/khởi động
+├── data/
+│   └── du_lieu_mau.csv       # Dữ liệu mẫu
+├── docs/
+│   ├── baocao/               # Nguồn LaTeX, PDF và script biên dịch báo cáo
+│   ├── demo_slide/           # Slide và kịch bản demo
+│   ├── verification/         # Ghi nhận kiểm chứng kỹ thuật
+│   └── KeHoach_BTL_DT05_ChiTiet.xlsx
+├── .github/workflows/        # GitHub Actions cho build và test C++
+├── Makefile
+└── README.md
 ```
 
-### Cách 3: Chạy bộ kiểm thử tự động (Unit Test & Integration Test)
+## 8. Các module mã nguồn chính
+
+| Tệp | Vai trò |
+|---|---|
+| `include/AVLTree.h`, `include/AVLTree.tpp` | Cài đặt cây AVL tổng quát và các thao tác trên cây |
+| `include/mathang.h`, `include/khohang.h` | Cấu trúc mặt hàng và kiểu dữ liệu kho |
+| `src/quan_ly_kho.cpp` | Nghiệp vụ CRUD, nhập/xuất và cảnh báo tồn kho |
+| `include/hoadon.h`, `src/lap_hoa_don.cpp` | Dữ liệu và nghiệp vụ lập hóa đơn |
+| `src/thongkedoanhthu.cpp`, `include/thongketop.h` | Thống kê doanh thu và mặt hàng bán chạy |
+| `include/FileIO.h` | Lưu/đọc dữ liệu nhị phân |
+| `src/main.cpp` | Menu và luồng điều phối chương trình |
+| `src/benchmark.cpp` | Chương trình đo hiệu năng |
+
+## 9. Biên dịch báo cáo LaTeX
+
+Nguồn báo cáo nằm trong `docs/baocao/`. Cần cài XeLaTeX và các package LaTeX mà tài liệu sử dụng.
+
+**Ubuntu/Linux/macOS (TeX Live):**
+
 ```bash
-g++ -std=c++11 -Wall -Iinclude tests/T23_test_suite.cpp -o test_suite && ./test_suite
-g++ -std=c++11 -Wall -Iinclude tests/test_fileio.cpp -o test_fileio && ./test_fileio
-g++ -std=c++11 -Wall -Iinclude tests/test_kho.cpp src/quan_ly_kho.cpp -o test_kho && ./test_kho
-g++ -std=c++11 -Wall -Iinclude tests/test_hoadon.cpp src/lap_hoa_don.cpp src/thongkedoanhthu.cpp -o test_hoadon && ./test_hoadon
-make && sh tests/test_khoi_dong.sh    # kiểm thử luồng khởi động với kho.dat hỏng (chạy trong thư mục tạm)
+cd docs/baocao
+chmod +x build_report.sh
+./build_report.sh
 ```
 
-> **An toàn dữ liệu:** các bài test chỉ dùng file tạm `tmp_*.dat` / `kho_test.dat`; `make test` và `make clean` **không xóa** `kho.dat` thật của người dùng.
+**Windows (MiKTeX hoặc TeX Live):**
 
+Mở Command Prompt tại thư mục `docs/baocao/` và chạy:
 
-> **Ghi chú xác minh:** Bảng trên là phân công theo kế hoạch, không phải tỷ lệ đóng góp đã được audit. Tỷ lệ thực tế, trạng thái PR/Jira, chia sẻ LaTeX cho giảng viên (T04), đọc chéo (T53) và tập dượt (T52) cần được xác nhận bằng bằng chứng tương ứng. Không suy ra trạng thái Done chỉ vì có file trong gói.
+```bat
+build_report.bat
+```
+
+Các script gọi XeLaTeX ba lượt để cập nhật mục lục, tham chiếu và số trang; sau đó sao chép `main.pdf` thành `report.pdf`.
+
+## 10. Kiểm tra tự động trên GitHub
+
+Workflow tại `.github/workflows/cpp-ci.yml` được cấu hình chạy khi có `push` hoặc `pull_request`. Workflow cài công cụ build trên Ubuntu, sau đó chạy:
+
+```bash
+make clean all
+make test
+```
+
+Có thể xem trạng thái chạy tại thẻ **Actions** của repository trên GitHub.
+
+## 11. Phân công thành viên
+
+Phạm vi phân công dưới đây phản ánh kế hoạch công việc của nhóm; không phải tỷ lệ phần trăm đóng góp đã được đo lường.
+
+| Thành viên | Phạm vi phụ trách |
+|---|---|
+| **TV1 – Đoàn Quốc Nhật (nhóm trưởng)** | Điều phối, tích hợp mã nguồn, chương trình chính/Makefile, README và tổng hợp báo cáo |
+| **TV2 – Huỳnh Long Nhật** | Cấu trúc dữ liệu AVL, phép quay, thao tác trên cây và kiểm thử AVL |
+| **TV3 – Trần Văn Tài** | Mô hình mặt hàng và nghiệp vụ quản lý kho: CRUD, nhập/xuất, cảnh báo, dữ liệu mẫu |
+| **TV4 – Hoàng Xuân Nhuật** | Hóa đơn, thống kê doanh thu, mặt hàng bán chạy và benchmark |
+| **TV5 – Nguyễn Duy Khang** | FileIO, lưu/khôi phục dữ liệu, giao diện console, tài liệu demo |
+| **Cả nhóm** | Tích hợp, kiểm thử, đọc chéo và hoàn thiện sản phẩm/báo cáo |
+
+Nếu cần công bố tỷ lệ đóng góp, nhóm cần thống nhất và đối chiếu bằng lịch sử commit, Pull Request/review, kết quả nghiệm thu từng phần và xác nhận của các thành viên; không suy ra tỷ lệ chỉ từ số task hoặc số dòng code.
+
+## 12. Tài liệu và minh chứng
+
+- Báo cáo PDF: `docs/baocao/report.pdf`.
+- Nguồn LaTeX: `docs/baocao/main.tex` và các file chương/phụ lục cùng thư mục.
+- Slide và kịch bản demo: `docs/demo_slide/`.
+- Kế hoạch công việc: `docs/KeHoach_BTL_DT05_ChiTiet.xlsx`.
+- Ghi nhận kiểm chứng: `docs/verification/`.
+
+## 13. Giới hạn và lưu ý
+
+- `data/du_lieu_mau.csv` là dữ liệu mẫu phục vụ chạy thử, không phải dữ liệu kinh doanh thực tế.
+- `kho.dat` là file nhị phân phụ thuộc cách bố trí dữ liệu/ABI của bản build; không nên xem đây là định dạng trao đổi độc lập compiler.
+- Không commit dữ liệu cá nhân hoặc dữ liệu vận hành thật nếu chưa được phép.
+- Kết quả benchmark chỉ có ý nghĩa khi đi kèm thông tin môi trường và cách đo.
+- README mô tả ứng dụng C++ console trong repository; không khẳng định dự án hiện tại là website.
