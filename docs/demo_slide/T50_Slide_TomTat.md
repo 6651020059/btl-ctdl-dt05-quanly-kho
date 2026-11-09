@@ -1,6 +1,7 @@
 # SLIDE TÓM TẮT BÀI TẬP LỚN ĐT05 (TASK T50 - TV5)
 
 ## Slide 1: Giới thiệu đề tài & Phân công nhóm
+- **Giảng viên hướng dẫn:** ThS. Trần Thị Dung
 - **Đề tài ĐT05:** Hệ thống Quản lý Hàng tồn kho & Doanh thu Siêu thị sử dụng Cây nhị phân tìm kiếm tự cân bằng AVL (`AVLTree<std::string, MatHang>`).
 - **Mục tiêu:** Đảm bảo thời gian tra cứu, thêm, xóa mặt hàng luôn đạt $O(\log n)$ ngay cả khi nhập mã hàng tăng dần (`MH001` -> `MH050`), hỗ trợ Range Search $O(\log n + k)$.
 
