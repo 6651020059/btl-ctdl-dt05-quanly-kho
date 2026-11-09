@@ -7,11 +7,9 @@ if ! command -v xelatex >/dev/null 2>&1; then
   exit 2
 fi
 
-echo "[1/3] Bien dich bao cao bang XeLaTeX..."
+echo "[1/2] Bien dich bao cao bang XeLaTeX..."
 xelatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
-echo "[2/3] Cap nhat muc luc va tham chieu..."
-xelatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
-echo "[3/3] Chot so trang, muc luc va tham chieu..."
+echo "[2/2] Cap nhat muc luc va tham chieu..."
 xelatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex
 cp main.pdf report.pdf
 echo "Hoan tat: $(pwd)/report.pdf"

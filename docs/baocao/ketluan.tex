@@ -18,7 +18,7 @@ Với 100 thao tác cập nhật ở quy mô 100.000 mặt hàng, AVL mất 23,5
 
 \section*{Hạn chế}
 \begin{itemize}
-  \item Sản phẩm hiện tại là chương trình C++ sử dụng giao diện dòng lệnh (console); trong phạm vi bài tập lớn, hệ thống chưa triển khai tài khoản người dùng và phân quyền.
+  \item Sản phẩm hiện tại là ứng dụng giao diện dòng lệnh (console), chưa có giao diện web, API HTTP, xác thực người dùng hoặc phân quyền.
   \item Dữ liệu được lưu theo biểu diễn nhị phân của các struct trong bản build. Header kiểm tra kích thước bản ghi nhưng định dạng vẫn chịu ảnh hưởng compiler/ABI, chưa phải định dạng trao đổi độc lập nền tảng.
   \item Cây AVL hiện được khóa theo mã hàng; lọc theo khoảng giá phải duyệt danh mục nên có độ phức tạp $O(n)$.
   \item Mỗi hóa đơn giới hạn tối đa 20 dòng chi tiết.
@@ -27,9 +27,9 @@ Với 100 thao tác cập nhật ở quy mô 100.000 mặt hàng, AVL mất 23,5
 \end{itemize}
 
 \section*{Tình trạng công việc và minh chứng}
-Tệp kế hoạch \texttt{KeHoach\_BTL\_DT05\_ChiTiet.xlsx} trong gói bàn giao có 53 task từ T01 đến T53. Tại bản lưu ngày 31/10/2026, sheet \texttt{Task chi tiết} ghi 29 task \texttt{Done}, 13 task \texttt{In Progress} và 11 task \texttt{To do}. Đây là trạng thái trong bảng kế hoạch được gửi kèm, không phải bản xuất Jira độc lập. Một bản LaTeX được cung cấp sau đó có nêu rằng Jira ghi nhận 53/53 task Done ngày 01/11/2026, nhưng bản xuất Jira tương ứng chưa nằm trong các tệp nguồn hiện có; vì vậy báo cáo này không coi tuyên bố đó là trạng thái đã được kiểm chứng.
+Tệp kế hoạch \texttt{KeHoach\_BTL\_DT05\_ChiTiet.xlsx} trong gói bàn giao có 53 task từ T01 đến T53. Snapshot ngày 31/10/2026 trong sheet \texttt{Task chi tiết} ghi 29 task \texttt{Done}, 13 task \texttt{In Progress} và 11 task \texttt{To do}. Theo cập nhật của nhóm ngày 09/11/2026, các công việc nội bộ đã hoàn thành sau snapshot này. Tuy nhiên, bản xuất Jira cập nhật, lịch sử commit theo tác giả và danh sách pull request đã merge chưa được đính kèm; vì vậy báo cáo phân biệt rõ xác nhận của nhóm với trạng thái có thể kiểm chứng từ tệp. Bảng theo thành viên trong phụ lục chỉ phản ánh snapshot lịch sử 31/10/2026, không phải tiến độ hiện tại.
 
-Các gói mã nguồn chứng minh được cấu trúc dự án, nội dung báo cáo, slide, kịch bản demo và kết quả build/test trong môi trường kiểm tra. Những minh chứng quy trình vẫn cần lưu riêng gồm lịch sử commit theo thành viên, URL/trạng thái pull request, email hoặc biên nhận chia sẻ LaTeX cho giảng viên, biên bản tập dượt T52, phiếu đọc chéo T53 và biên nhận nộp bài. Không quy đổi số task hoặc số dòng code thành tỷ lệ đóng góp cá nhân.
+Các gói mã nguồn chứng minh được cấu trúc dự án, nội dung báo cáo, slide, kịch bản demo và kết quả build/test trong môi trường kiểm tra. Những minh chứng quy trình cần đính kèm hoặc lưu tại repository gồm lịch sử commit theo thành viên, URL/trạng thái pull request, bản xuất Jira mới nhất, email hoặc biên nhận chia sẻ LaTeX cho giảng viên, biên bản tập dượt T52, phiếu đọc chéo T53 và biên nhận nộp bài. Tỷ trọng task trong kế hoạch không thay thế tỷ lệ đóng góp; không quy đổi số task hoặc số dòng code thành tỷ lệ đóng góp cá nhân.
 
 \section*{Hướng phát triển}
-Các hướng mở rộng gồm tách lớp nghiệp vụ khỏi phần nhập/xuất console để thuận lợi cho kiểm thử; bổ sung chỉ mục phụ theo đơn giá; chuẩn hóa định dạng lưu file độc lập ABI, có checksum và cơ chế chuyển đổi phiên bản; bổ sung kiểm thử bộ nhớ; tìm kiếm theo tên/nhóm hàng; và mở rộng benchmark sang truy vấn không tìm thấy, bộ nhớ, tải đồng thời cùng các phân phối dữ liệu khác.
+Các hướng mở rộng gồm tách lớp nghiệp vụ khỏi console; xây dựng API và giao diện web; bổ sung cơ sở dữ liệu có giao dịch; thêm chỉ mục phụ theo đơn giá; chuẩn hóa định dạng lưu file độc lập ABI, có checksum và cơ chế chuyển đổi schema; bổ sung kiểm thử bộ nhớ; tìm kiếm theo tên/nhóm hàng; và mở rộng benchmark sang truy vấn thất bại, bộ nhớ, tải đồng thời cùng các phân phối dữ liệu khác.

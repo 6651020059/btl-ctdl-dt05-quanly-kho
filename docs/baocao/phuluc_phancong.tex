@@ -1,5 +1,5 @@
-\chapter*{Phụ lục: Phân công công việc}
-\addcontentsline{toc}{chapter}{Phụ lục: Phân công công việc}
+\chapter*{Phụ lục: Phân công công việc và tình trạng xác minh}
+\addcontentsline{toc}{chapter}{Phụ lục: Phân công công việc và tình trạng xác minh}
 
 Phụ lục này tổng hợp phạm vi phân công theo workbook \texttt{KeHoach\_BTL\_DT05\_ChiTiet.xlsx} được gửi trong gói TV1. Workbook có 53 task, mã từ T01 đến T53. Các nhánh trong bảng là tên nhánh theo kế hoạch/README; sự tồn tại và trạng thái merge của từng nhánh cần được đối chiếu trực tiếp trên GitHub.
 
@@ -39,11 +39,36 @@ Tổng cộng & 53 & 100\% \\
 \end{tabular}
 \end{table}
 
-Các con số trên phản ánh nội dung được lưu trong workbook kế hoạch tại thời điểm ghi nhận. Workbook không phải bản xuất Jira; do đó không dùng các con số này để khẳng định trạng thái hiện tại trên Jira. Một tệp LaTeX khác được cung cấp có đề cập bản xuất Jira ngày 01/11/2026 với 53/53 task Done, nhưng bản xuất gốc (CSV/PDF/Excel) không có trong năm gói ZIP và các tệp bàn giao. Nhóm chỉ nên cập nhật thành 53/53 Done khi bổ sung được bản xuất Jira có thể đối chiếu.
+\begin{table}[H]
+\centering
+\caption{Tiến độ theo thành viên tại snapshot 31/10/2026}
+\small
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Thành viên} & \textbf{Tổng task} & \textbf{Done} & \textbf{Đang làm} & \textbf{To do} & \textbf{Hoàn thành} & \textbf{Tỷ trọng task} \\
+\midrule
+TV1 -- Đoàn Quốc Nhật & 15 & 3 & 4 & 8 & 20,0\% & 28,3\% \\
+TV2 -- Huỳnh Long Nhật & 10 & 7 & 2 & 1 & 70,0\% & 18,9\% \\
+TV3 -- Trần Văn Tài & 9 & 7 & 2 & 0 & 77,8\% & 17,0\% \\
+TV4 -- Hoàng Xuân Nhuật & 9 & 7 & 2 & 0 & 77,8\% & 17,0\% \\
+TV5 -- Nguyễn Duy Khang & 9 & 5 & 3 & 1 & 55,6\% & 17,0\% \\
+Cả nhóm & 1 & 0 & 0 & 1 & 0,0\% & 1,9\% \\
+\midrule
+Tổng cộng & 53 & 29 & 13 & 11 & 54,7\% & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Tỷ lệ hoàn thành trong bảng được tính bằng số task \texttt{Done} chia cho tổng task giao cho thành viên tại snapshot. Tỷ trọng task là số task được giao chia cho 53; đây chỉ là khối lượng theo số đầu việc trong kế hoạch, không phải tỷ lệ đóng góp thực tế hay thước đo độ khó/khối lượng giờ làm. Hai chỉ số này không thay thế được lịch sử commit, nội dung pull request và xác nhận nghiệm thu.
+
+Theo cập nhật của nhóm ngày 09/11/2026, các công việc nội bộ đã được nhóm hoàn thành sau snapshot nói trên. Tuy nhiên, gói tệp được cung cấp chưa có bản xuất Jira cập nhật sau ngày 31/10/2026, lịch sử commit đầy đủ hoặc danh sách pull request đã merge để đối chiếu. Vì vậy, các bảng trên được giữ đúng nhãn \textbf{snapshot lịch sử 31/10/2026}, không được hiểu là tiến độ hiện tại. Trước khi nộp, nhóm cần xuất Jira ở trạng thái mới nhất và cập nhật bảng theo minh chứng đó.
+
+Bảng Jira nhóm đã cung cấp: \href{https://st-team-mdi9ncf5.atlassian.net/jira/software/projects/DT05/list}{Bảng Jira DT05 trên Atlassian}. Liên kết giúp giảng viên truy cập bảng công việc khi được cấp quyền; báo cáo này không tự xác nhận các trạng thái chưa có bản xuất hoặc ảnh chụp đối chiếu.
 
 \section*{Quy tắc xác nhận phần trăm đóng góp}
 Nhóm không công bố phần trăm đóng góp cá nhân trong phụ lục này. Số task được giao/đóng, số file hoặc số dòng thêm/xóa không tự động phản ánh giá trị đóng góp. Nếu cần xác định tỷ lệ, nhóm nên thống nhất khoảng thời gian thống kê; xuất lịch sử commit theo tác giả; loại commit merge, commit bot và commit trùng; đối chiếu thay đổi thực chất trong pull request; sau đó so sánh với task đã được nghiệm thu và xác nhận của các thành viên.
 
+\clearpage
 \section*{Danh sách minh chứng quy trình cần lưu}
 \begin{itemize}
   \item URL repository, lịch sử commit và danh sách thành viên có quyền truy cập.
